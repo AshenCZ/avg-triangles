@@ -27,9 +27,14 @@ void handleEvents(sf::RenderWindow& window) {
 }
 
 int main() {
-    sf::RenderWindow window(sf::VideoMode(200, 200), std::string("AVG project Stepan Hojdar"));
-    window.setSize(sf::Vector2u(640, 480));
+    sf::ContextSettings settings;
+    settings.antialiasingLevel = 8;
+
+    sf::RenderWindow window(sf::VideoMode(800, 600), std::string("AVG project Stepan Hojdar"), sf::Style::Default, settings);
     window.setFramerateLimit(FPS_LIMIT);
+
+    sf::Font font;
+    if(!font.loadFromFile("../fonts/OpenSans-Regular.ttf")) {}
 
     sf::CircleShape shape(100.f);
     shape.setFillColor(sf::Color::Green);
@@ -38,7 +43,16 @@ int main() {
         handleEvents(window);
 
         window.clear();
+        shape.setPosition(50,50);
         window.draw(shape);
+
+        sf::Text text;
+        text.setFont(font);
+        text.setCharacterSize(16);
+        text.setString("Triangles: 0");
+        text.setFillColor(sf::Color::White);
+
+        window.draw(text);
         window.display();
     }
 
