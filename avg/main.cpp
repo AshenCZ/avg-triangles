@@ -70,6 +70,7 @@ class Geometry {
     }
 
     // Compute barycentric coordinates of 'point' in 'triangle' and check if it is inside. Return coordinates if inside, empty if outside.
+    // Code from https://gamedev.stackexchange.com/questions/23743/whats-the-most-efficient-way-to-find-barycentric-coordinates, edited
     std::optional<std::array<float, 3>> checkBarycentricCoordinates(const Triangle& triangle, const sf::Vector2f& point, const float tolerance = 0.00001f) const {
         const sf::Vector2f& a = mPoints[triangle.vertexIndex[0]];
         const sf::Vector2f& b = mPoints[triangle.vertexIndex[1]];
