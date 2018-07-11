@@ -119,15 +119,9 @@ int main() {
             window.draw(text);
         }
 
-        // Draw the points
-        for(const auto& pt : allGeometry.getPoints()) {
-            shape.setPosition(pt.x, pt.y);
-            window.draw(shape);
-        }
-
         // Draw the triangle sides
         for(Triangle& tri : allGeometry.getTriangles()) {
-            if(!show) {
+            if(!show) { // Show or hide hidden edges
                 if(!tri.drawable) {
                     continue;
                 }
@@ -147,14 +141,19 @@ int main() {
                     continue;
                 }
             }
+            std::array<std::pair<size_t, size_t>, 3> pairs = {std::pair<size_t, size_t>(0, 1), {1, 2}, {2, 0}};
+            for(const auto& side : pairs) {
+                sf::Vertex line[] = {sf::Vertex(points[tri.vertexIndex[side.first]], sf::Color::White),
+                                     sf::Vertex(points[tri.vertexIndex[side.second]], sf::Color::White)};
+                window.draw(line, 2, sf::Lines);
 
-            sf::Vertex line1[] = {sf::Vertex(points[tri.vertexIndex[0]]), sf::Vertex(points[tri.vertexIndex[1]])};
-            sf::Vertex line2[] = {sf::Vertex(points[tri.vertexIndex[1]]), sf::Vertex(points[tri.vertexIndex[2]])};
-            sf::Vertex line3[] = {sf::Vertex(points[tri.vertexIndex[2]]), sf::Vertex(points[tri.vertexIndex[0]])};
+            }
+        }
 
-            window.draw(line1, 2, sf::Lines);
-            window.draw(line2, 2, sf::Lines);
-            window.draw(line3, 2, sf::Lines);
+        // Draw the points
+        for(const auto& pt : allGeometry.getPoints()) {
+            shape.setPosition(pt.x, pt.y);
+            window.draw(shape);
         }
 
         window.display();
