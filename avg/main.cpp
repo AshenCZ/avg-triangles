@@ -1,7 +1,7 @@
+#include <array>
 #include <cassert>
 #include <iostream>
 #include <optional>
-#include <array>
 
 #include <SFML/Graphics.hpp>
 
@@ -42,8 +42,7 @@ class Geometry {
         mTriangles.emplace_back(4, 5, 8);
     }
 
-    void resetTriangleData()
-    {
+    void resetTriangleData() {
         // Reset triangles
         mTriangles.clear();
     }
@@ -69,9 +68,12 @@ class Geometry {
         return left.x * right.x + left.y * right.y;
     }
 
-    // Compute barycentric coordinates of 'point' in 'triangle' and check if it is inside. Return coordinates if inside, empty if outside.
-    // Code from https://gamedev.stackexchange.com/questions/23743/whats-the-most-efficient-way-to-find-barycentric-coordinates, edited
-    std::optional<std::array<float, 3>> checkBarycentricCoordinates(const Triangle& triangle, const sf::Vector2f& point, const float tolerance = 0.00001f) const {
+    // Compute barycentric coordinates of 'point' in 'triangle' and check if it is inside. Return coordinates if inside,
+    // empty if outside. Code from
+    // https://gamedev.stackexchange.com/questions/23743/whats-the-most-efficient-way-to-find-barycentric-coordinates,
+    // edited
+    std::optional<std::array<float, 3>> checkBarycentricCoordinates(const Triangle& triangle, const sf::Vector2f& point,
+                                                                    const float tolerance = 0.00001f) const {
         const sf::Vector2f& a = mPoints[triangle.vertexIndex[0]];
         const sf::Vector2f& b = mPoints[triangle.vertexIndex[1]];
         const sf::Vector2f& c = mPoints[triangle.vertexIndex[2]];
@@ -87,7 +89,7 @@ class Geometry {
         const float d21 = dot(v2, v1);
         const float denominator = d00 * d11 - d01 * d01;
 
-        if (denominator == 0) {
+        if(denominator == 0) {
             return {};
         }
 
@@ -96,42 +98,45 @@ class Geometry {
         const float w = (d00 * d21 - d01 * d20) * denominatorFraction;
 
         // The point is inside the triangle IFF u + v + w == 1 && 0 <= u,v,w <= 1
-        if (std::min(v, w) >= -tolerance && std::max(v, w) <= 1.f + tolerance && v + w <= 1.f + tolerance) {
-            return std::array<float, 3>({ 1.0f - v - w, v, w });
+        if(std::min(v, w) >= -tolerance && std::max(v, w) <= 1.f + tolerance && v + w <= 1.f + tolerance) {
+            return std::array<float, 3>({1.0f - v - w, v, w});
         } else {
             return {};
         }
     }
 
     // Returns the index of the triangle 'point' lies in
-    size_t findTriangle(const sf::Vector2f point) const
-    {
-        for(size_t i = 0; i < mTriangles.size(); ++i)
-        {
+    std::optional<size_t> findTriangle(const sf::Vector2f point) const {
+        for(size_t i = 0; i < mTriangles.size(); ++i) {
             const auto& triangle = mTriangles[i];
             const auto coordsMaybe = checkBarycentricCoordinates(triangle, point);
             if(coordsMaybe.has_value()) {
                 return i;
             }
         }
-        return 0;
+        return {};
     }
 
-    void triangulateOne(const sf::Vector2f point)
-    {
-        const size_t insideTriangleInd = findTriangle(point);
+    void triangulateOne(const sf::Vector2f point) {
+        const auto indexMaybe = findTriangle(point);
+        size_t insideTriangleInd = 0;
+        if(!indexMaybe.has_value()) {
+            return;
+        } else {
+            insideTriangleInd = indexMaybe.value();
+        }
         const size_t priorTriSize = mTriangles.size();
         assert(insideTriangleInd < mTriangles.size());
 
-        const std::array<size_t, 3> vertexIndices =mTriangles[insideTriangleInd].vertexIndex;
+        const std::array<size_t, 3> vertexIndices = mTriangles[insideTriangleInd].vertexIndex;
         mTriangles.erase(mTriangles.begin() + insideTriangleInd);
         assert(mPoints.back().x == point.x);
         assert(mPoints.back().y == point.y);
 
         const size_t pointIndex = mPoints.size() - 1;
-        mTriangles.emplace_back(vertexIndices[0],vertexIndices[1],pointIndex);
-        mTriangles.emplace_back(pointIndex,vertexIndices[1],vertexIndices[2]);
-        mTriangles.emplace_back(vertexIndices[0],pointIndex,vertexIndices[2]);
+        mTriangles.emplace_back(vertexIndices[0], vertexIndices[1], pointIndex);
+        mTriangles.emplace_back(pointIndex, vertexIndices[1], vertexIndices[2]);
+        mTriangles.emplace_back(vertexIndices[0], pointIndex, vertexIndices[2]);
 
         assert(priorTriSize + 2 == mTriangles.size());
     }
