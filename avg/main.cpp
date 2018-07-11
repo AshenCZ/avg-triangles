@@ -1,5 +1,6 @@
 #include <cassert>
 #include <iostream>
+#include <optional>
 
 #include <SFML/Graphics.hpp>
 
@@ -40,26 +41,94 @@ class Geometry {
         mTriangles.emplace_back(4, 5, 8);
     }
 
+    void resetTriangleData()
+    {
+        // Reset triangles
+        mTriangles.clear();
+    }
+
     void triangulateAll() {
         if(mPoints.size() < 3) {
             return;
         }
 
         // Reset triangles
-        const size_t triCount = mTriangles.size();
-        mTriangles.clear();
-        mTriangles.reserve(triCount);
+        resetTriangleData();
 
         // Build overarching triangle with flag !drawable
         // \todo
 
         // Insert point by point
-        for(auto& pt : mPoints) {
-            triangulateOne(pt);
+        // for(auto& pt : mPoints) {
+        //     triangulateOne(pt);
+        // }
+    }
+
+    // Compute barycentric coordinates of 'point' in 'triangle' and check if it is inside. Return coordinates if inside, empty if outside.
+    std::optional<std::array<float, 3>> checkBarycentricCoordinates(const Triangle& triangle, const sf::Vector2f& point, const float tolerance = 0.00001f) const {
+        const sf::Vector2f& a = mPoints[mTriangles[triangle].vertexIndex[0]];
+        const sf::Vector2f& b = mPoints[mTriangles[triangle].vertexIndex[1]];
+        const sf::Vector2f& c = mPoints[mTriangles[triangle].vertexIndex[2]];
+
+        const sf::Vector2f v0 = b - a;
+        const sf::Vector2f v1 = c - a;
+        const sf::Vector2f v2 = point - a;
+
+        const float d00 = dot(v0, v0);
+        const float d01 = dot(v0, v1);
+        const float d11 = dot(v1, v1);
+        const float d20 = dot(v2, v0);
+        const float d21 = dot(v2, v1);
+        const float denominator = d00 * d11 - d01 * d01;
+
+        if (denominator == 0) {
+            return {};
+        }
+
+        const float denominatorFraction = 1.f / denominator;
+        const float v = (d11 * d20 - d01 * d21) * denominatorFraction;
+        const float w = (d00 * d21 - d01 * d20) * denominatorFraction;
+
+        // The point is inside the triangle IFF u + v + w == 1 && 0 <= u,v,w <= 1
+        if (std::min(v, w) >= -tolerance && std::max(v, w) <= 1.f + tolerance && v + w <= 1.f + tolerance) {
+            return std::array<float, 3>({ 1.0f - v - w, v, w });
+        } else {
+            return {};
         }
     }
 
-    void triangulateOne(sf::Vector2f) {}
+    // Returns the index of the triangle 'point' lies in
+    size_t findTriangle(const sf::Vector2f point) const
+    {
+        for(size_t i = 0; i < mTriangles.size(); ++i)
+        {
+            const auto& triangle = mTriangles[i];
+            const auto coordsMaybe = checkBarycentricCoordinates(triangle, point);
+            if(coordsMaybe.has_value()) {
+                return i;
+            }
+        }
+        return 0;
+    }
+
+    void triangulateOne(const sf::Vector2f point)
+    {
+        const size_t insideTriangleInd = findTriangle(point);
+        const size_t priorTriSize = mTriangle.size();
+        assert(insideTriangleInd < mTriangle.size());
+
+        const std::array<size_t, 3> vertexIndices = mTriangles[insideTriangleInd].vertexIndex;
+        mTriangles.erase(insideTriangleInd);
+        assert(mPoints.back().x == point.x);
+        assert(mPoints.back().y == point.y);
+
+        const size_t pointIndex = mPoints.size();
+        mTriangles.emplace_back(vertexIndices[0],vertexIndices[1],pointIndex);
+        mTriangles.emplace_back(pointIndex,vertexIndices[1],vertexIndices[2]);
+        mTriangles.emplace_back(vertexIndices[0],pointIndex,vertexIndices[2]);
+
+        assert(priorTriSize + 2 == mTriangle.size());
+    }
 
    public:
     Geometry() {
@@ -85,7 +154,6 @@ class Geometry {
         triangulateAll();
     }
 };
-
 
 void handleEvents(sf::RenderWindow& window, Geometry& allGeometry) {
     sf::Event event{};
