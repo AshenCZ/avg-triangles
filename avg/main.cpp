@@ -1,13 +1,14 @@
 #include <cassert>
 #include <iostream>
 #include <optional>
+#include <array>
 
 #include <SFML/Graphics.hpp>
 
 #define FPS_LIMIT 10
 
 struct Triangle {
-    size_t vertexIndex[3]{};
+    std::array<size_t, 3> vertexIndex;
 
     bool drawable = true;
 
@@ -64,11 +65,15 @@ class Geometry {
         // }
     }
 
+    static float dot(const sf::Vector2f left, const sf::Vector2f right) {
+        return left.x * right.x + left.y * right.y;
+    }
+
     // Compute barycentric coordinates of 'point' in 'triangle' and check if it is inside. Return coordinates if inside, empty if outside.
     std::optional<std::array<float, 3>> checkBarycentricCoordinates(const Triangle& triangle, const sf::Vector2f& point, const float tolerance = 0.00001f) const {
-        const sf::Vector2f& a = mPoints[mTriangles[triangle].vertexIndex[0]];
-        const sf::Vector2f& b = mPoints[mTriangles[triangle].vertexIndex[1]];
-        const sf::Vector2f& c = mPoints[mTriangles[triangle].vertexIndex[2]];
+        const sf::Vector2f& a = mPoints[triangle.vertexIndex[0]];
+        const sf::Vector2f& b = mPoints[triangle.vertexIndex[1]];
+        const sf::Vector2f& c = mPoints[triangle.vertexIndex[2]];
 
         const sf::Vector2f v0 = b - a;
         const sf::Vector2f v1 = c - a;
@@ -114,20 +119,20 @@ class Geometry {
     void triangulateOne(const sf::Vector2f point)
     {
         const size_t insideTriangleInd = findTriangle(point);
-        const size_t priorTriSize = mTriangle.size();
-        assert(insideTriangleInd < mTriangle.size());
+        const size_t priorTriSize = mTriangles.size();
+        assert(insideTriangleInd < mTriangles.size());
 
-        const std::array<size_t, 3> vertexIndices = mTriangles[insideTriangleInd].vertexIndex;
-        mTriangles.erase(insideTriangleInd);
+        const std::array<size_t, 3> vertexIndices =mTriangles[insideTriangleInd].vertexIndex;
+        mTriangles.erase(mTriangles.begin() + insideTriangleInd);
         assert(mPoints.back().x == point.x);
         assert(mPoints.back().y == point.y);
 
-        const size_t pointIndex = mPoints.size();
+        const size_t pointIndex = mPoints.size() - 1;
         mTriangles.emplace_back(vertexIndices[0],vertexIndices[1],pointIndex);
         mTriangles.emplace_back(pointIndex,vertexIndices[1],vertexIndices[2]);
         mTriangles.emplace_back(vertexIndices[0],pointIndex,vertexIndices[2]);
 
-        assert(priorTriSize + 2 == mTriangle.size());
+        assert(priorTriSize + 2 == mTriangles.size());
     }
 
    public:
