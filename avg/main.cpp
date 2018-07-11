@@ -22,6 +22,11 @@ void handleEvents(sf::RenderWindow& window, Geometry& allGeometry, bool& show) {
                 window.close();
             } else if(event.key.code == sf::Keyboard::H) {
                 show = !show;
+            } else if(event.key.code == sf::Keyboard::D) {
+                const auto& points = allGeometry.getPoints();
+                for(const auto& p : points) {
+                    std::cout << "sf::Vector2f(" << p.x << "," << p.y << "), ";
+                }
             }
             break;
         case sf::Event::MouseButtonPressed: {
@@ -95,6 +100,12 @@ int main() {
                            sf::Vector2f(483, 353), sf::Vector2f(411, 419), sf::Vector2f(259, 381),
                            sf::Vector2f(507, 160)};
 
+    std::vector<sf::Vector2f> pointsInLetter = {sf::Vector2f(70, 450),  sf::Vector2f(140, 450), sf::Vector2f(140, 470),
+                                                sf::Vector2f(115, 470), sf::Vector2f(115, 530), sf::Vector2f(95, 535),
+                                                sf::Vector2f(95, 470),  sf::Vector2f(70, 470)};
+    std::vector<Edge> edgesInLetter = {Edge(0, 1), Edge(1, 2), Edge(2, 3), Edge(3, 4),
+                                       Edge(4, 5), Edge(5, 6), Edge(6, 7), Edge(7, 0)};
+
     for(const auto& pt : pointsToInsert) {
         allGeometry.insertPoint(pt);
     }
@@ -102,10 +113,10 @@ int main() {
     const auto& points = allGeometry.getPoints();
     const auto& triangles = allGeometry.getTriangles();
 
-    bool show = false;
+    bool uiShow = false;
 
     while(window.isOpen()) {
-        handleEvents(window, allGeometry, show);
+        handleEvents(window, allGeometry, uiShow);
 
         window.clear();
 
@@ -119,9 +130,16 @@ int main() {
             window.draw(text);
         }
 
+        // Draw the pattern
+        for(const auto& e : edgesInLetter) {
+            sf::Vertex line[] = {sf::Vertex(pointsInLetter[e.first], sf::Color::Red),
+                                 sf::Vertex(pointsInLetter[e.second], sf::Color::Red)};
+            window.draw(line, 2, sf::Lines);
+        }
+
         // Draw the triangle sides
         for(Triangle& tri : allGeometry.getTriangles()) {
-            if(!show) { // Show or hide hidden edges
+            if(!uiShow) {  // Show or hide hidden edges
                 if(!tri.drawable) {
                     continue;
                 }
@@ -146,7 +164,6 @@ int main() {
                 sf::Vertex line[] = {sf::Vertex(points[tri.vertexIndex[side.first]], sf::Color::White),
                                      sf::Vertex(points[tri.vertexIndex[side.second]], sf::Color::White)};
                 window.draw(line, 2, sf::Lines);
-
             }
         }
 
