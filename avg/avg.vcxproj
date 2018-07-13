@@ -163,7 +163,9 @@
     <Font Include="..\fonts\OpenSans-Regular.ttf" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AppData.h" />
     <ClInclude Include="Geometry.h" />
+    <ClInclude Include="Pattern.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -6,6 +6,7 @@
 #include <vector>
 
 #include <SFML/Graphics.hpp>
+#include <unordered_map>
 
 using Edge = std::pair<size_t, size_t>;
 
@@ -15,6 +16,14 @@ struct Triangle {
     bool drawable = true;
 
     explicit Triangle(size_t one, size_t two, size_t three) : vertexIndex({one, two, three}), drawable(true){};
+};
+
+struct pairhash {
+   public:
+    template <typename T, typename U>
+    std::size_t operator()(const std::pair<T, U>& x) const {
+        return std::hash<T>()(x.first) ^ std::hash<U>()(x.second);
+    }
 };
 
 class Geometry {

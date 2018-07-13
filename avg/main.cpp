@@ -6,12 +6,16 @@
 #include <SFML/Graphics.hpp>
 
 #include "Geometry.h"
+#include "AppData.h"
 
 #define FPS_LIMIT 10
 
-void handleEvents(sf::RenderWindow& window, Geometry& allGeometry, bool& show) {
+void handleEvents(sf::RenderWindow& window, AppData& data) {
     sf::Event event{};
     sf::Rect<float> triangulateButton(15, 80, 75, 25);
+    bool& show = data.uiShow;
+    Geometry& allGeometry = data.geometry;
+
     while(window.pollEvent(event)) {
         switch(event.type) {
         case sf::Event::Closed:
@@ -49,30 +53,6 @@ void handleEvents(sf::RenderWindow& window, Geometry& allGeometry, bool& show) {
     }
 }
 
-void fillUi(std::vector<sf::Text>& uiText, std::vector<sf::RectangleShape>& uiRects, const sf::Font& font) {
-    sf::RectangleShape triangulateButton(sf::Vector2f(75, 25));
-    triangulateButton.setPosition(15, 80);
-    triangulateButton.setFillColor(sf::Color(50, 50, 50));
-    triangulateButton.setOutlineColor(sf::Color::White);
-    triangulateButton.setOutlineThickness(1);
-    uiRects.push_back(triangulateButton);
-
-    sf::Text text;
-    text.setFont(font);
-    text.setPosition(15, 15);
-    text.setCharacterSize(16);
-    text.setFillColor(sf::Color::White);
-    uiText.push_back(text);
-
-    sf::Text triangulateButtonText;
-    triangulateButtonText.setFont(font);
-    triangulateButtonText.setPosition(20, 83);
-    triangulateButtonText.setCharacterSize(12);
-    triangulateButtonText.setString("Triangulate");
-    triangulateButtonText.setFillColor(sf::Color::White);
-    uiText.push_back(triangulateButtonText);
-}
-
 int main() {
     sf::ContextSettings settings;
     settings.antialiasingLevel = 8;
@@ -81,97 +61,14 @@ int main() {
                             settings);
     window.setFramerateLimit(FPS_LIMIT);
 
-    sf::Font font;
-    if(!font.loadFromFile("../fonts/OpenSans-Regular.ttf")) {
-    }
-
-    sf::CircleShape shape(3.f);
-    shape.setFillColor(sf::Color::Green);
-    shape.setOrigin(shape.getRadius(), shape.getRadius());
-
-    Geometry allGeometry;
-
-    std::vector<sf::Text> uiText;
-    std::vector<sf::RectangleShape> uiRects;
-    fillUi(uiText, uiRects, font);
-
-    auto pointsToInsert = {sf::Vector2f(361, 179), sf::Vector2f(291, 251), sf::Vector2f(413, 264),
-                           sf::Vector2f(240, 158), sf::Vector2f(172, 247), sf::Vector2f(332, 337),
-                           sf::Vector2f(483, 353), sf::Vector2f(411, 419), sf::Vector2f(259, 381),
-                           sf::Vector2f(507, 160)};
-
-    std::vector<sf::Vector2f> pointsInLetter = {sf::Vector2f(70, 450),  sf::Vector2f(140, 450), sf::Vector2f(140, 470),
-                                                sf::Vector2f(115, 470), sf::Vector2f(115, 530), sf::Vector2f(95, 535),
-                                                sf::Vector2f(95, 470),  sf::Vector2f(70, 470)};
-    std::vector<Edge> edgesInLetter = {Edge(0, 1), Edge(1, 2), Edge(2, 3), Edge(3, 4),
-                                       Edge(4, 5), Edge(5, 6), Edge(6, 7), Edge(7, 0)};
-
-    for(const auto& pt : pointsToInsert) {
-        allGeometry.insertPoint(pt);
-    }
-
-    const auto& points = allGeometry.getPoints();
-    const auto& triangles = allGeometry.getTriangles();
-
-    bool uiShow = false;
+    AppData data;
 
     while(window.isOpen()) {
-        handleEvents(window, allGeometry, uiShow);
+        handleEvents(window, data);
 
         window.clear();
 
-        // Draw UI
-        uiText[0].setString("Triangles: " + std::to_string(triangles.size()) + "\nPoints: " +
-                            std::to_string(points.size()) + "\nPress H to hide/show encapsulating triangle");
-        for(const auto& rect : uiRects) {
-            window.draw(rect);
-        }
-        for(const auto& text : uiText) {
-            window.draw(text);
-        }
-
-        // Draw the pattern
-        for(const auto& e : edgesInLetter) {
-            sf::Vertex line[] = {sf::Vertex(pointsInLetter[e.first], sf::Color::Red),
-                                 sf::Vertex(pointsInLetter[e.second], sf::Color::Red)};
-            window.draw(line, 2, sf::Lines);
-        }
-
-        // Draw the triangle sides
-        for(Triangle& tri : allGeometry.getTriangles()) {
-            if(!uiShow) {  // Show or hide hidden edges
-                if(!tri.drawable) {
-                    continue;
-                }
-
-                bool valid = true;
-                if(tri.vertexIndex[0] == 0 || tri.vertexIndex[0] == 1 || tri.vertexIndex[0] == 2) {
-                    valid = false;
-                }
-                if(tri.vertexIndex[1] == 0 || tri.vertexIndex[1] == 1 || tri.vertexIndex[1] == 2) {
-                    valid = false;
-                }
-                if(tri.vertexIndex[2] == 0 || tri.vertexIndex[2] == 1 || tri.vertexIndex[2] == 2) {
-                    valid = false;
-                }
-                if(!valid) {
-                    tri.drawable = false;
-                    continue;
-                }
-            }
-            std::array<std::pair<size_t, size_t>, 3> pairs = {std::pair<size_t, size_t>(0, 1), {1, 2}, {2, 0}};
-            for(const auto& side : pairs) {
-                sf::Vertex line[] = {sf::Vertex(points[tri.vertexIndex[side.first]], sf::Color::White),
-                                     sf::Vertex(points[tri.vertexIndex[side.second]], sf::Color::White)};
-                window.draw(line, 2, sf::Lines);
-            }
-        }
-
-        // Draw the points
-        for(const auto& pt : allGeometry.getPoints()) {
-            shape.setPosition(pt.x, pt.y);
-            window.draw(shape);
-        }
+        data.draw(window);
 
         window.display();
     }
