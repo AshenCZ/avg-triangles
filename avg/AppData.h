@@ -12,8 +12,6 @@
 
 class AppData {
    private:
-    Pattern pattern;
-
     sf::Font font;
     std::vector<sf::Text> uiText;
     std::vector<sf::RectangleShape> uiRects;
@@ -21,6 +19,7 @@ class AppData {
 
    public:
     Geometry geometry;
+    Pattern pattern;
     bool uiShow = false;
 
     AppData() {

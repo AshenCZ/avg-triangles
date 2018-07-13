@@ -5,8 +5,8 @@
 
 #include <SFML/Graphics.hpp>
 
-#include "Geometry.h"
 #include "AppData.h"
+#include "Geometry.h"
 
 #define FPS_LIMIT 10
 
@@ -31,6 +31,10 @@ void handleEvents(sf::RenderWindow& window, AppData& data) {
                 for(const auto& p : points) {
                     std::cout << "sf::Vector2f(" << p.x << "," << p.y << "), ";
                 }
+            } else if(event.key.code == sf::Keyboard::R) {
+                data.pattern.reset();
+            } else if(event.key.code == sf::Keyboard::I) {
+                data.pattern.getNewValues();
             }
             break;
         case sf::Event::MouseButtonPressed: {
