@@ -72,6 +72,10 @@ class Geometry {
         fillGeometry();
     }
 
+    void inputEdge(const Edge& edge) {
+        insertEdge(edge);
+    }
+
    private:
     /// Triangulation methods
 
@@ -371,33 +375,113 @@ class Geometry {
         /// 1 = between 1 and 2
         /// 2 = between 2 and 0
         int edgeIntersected = -1;
+
+        Intersection() = default;
+
+        Intersection(float tt, int vi, int ei) : t(tt), vertexIntersected(vi), edgeIntersected(ei){};
     };
 
-    static std::optional<std::vector<Intersection>> edgeIntersectsTriangle(const Edge& edge, const Triangle& triangle) {
-        return {};
-    }
-
-    std::vector<Intersection> getIntersectingPoints(const Edge& edge, const Triangle& triangle) {
-        std::vector<Intersection> retPoints;
-        for(const Triangle& tri : mTriangles) {
-            // Get intersection data
-            auto intersectMaybe = edgeIntersectsTriangle(edge, tri);
-            // Check intersection
-            if(intersectMaybe.has_value()) {
-                auto points = intersectMaybe.value();
-                // Add intersection points to final list
-                for(auto p : points) {
-                    retPoints.emplace_back(p);
-                }
+    std::optional<std::vector<Intersection>> edgeIntersectsTriangle(const Edge& edge, const Triangle& triangle) {
+        // Check for shared vertices
+        size_t match1 = std::numeric_limits<size_t>::max();
+        size_t match2 = std::numeric_limits<size_t>::max();
+        for(size_t i = 0; i < 3; ++i) {
+            if(edge.first == triangle.vertexIndex[i]) {
+                match1 = i;
+            }
+            if(edge.second == triangle.vertexIndex[i]) {
+                match2 = i;
             }
         }
 
-        // EPS error balancing maybe?
-        // sort array
-        // compare neighbours, cull if they are EPS close
+        // 2 shared vertices? \todo ! mark edge as important
+        if(match1 != std::numeric_limits<size_t>::max() && match2 != std::numeric_limits<size_t>::max()) {
+            // completely hidden within and edge
+            std::cout << "ende hier.\n";
+            return {};
+        }
 
-        return retPoints;
-    };
+        // shared vertex
+        if(match1 != std::numeric_limits<size_t>::max() || match2 != std::numeric_limits<size_t>::max()) {
+            // which is the same?
+            size_t sharedTriangleIndex = 4;
+            size_t outsideVertexPointsIndex = 4;
+            float tt = 4;
+            if(match1 != std::numeric_limits<size_t>::max()) {
+                sharedTriangleIndex = match1;
+                outsideVertexPointsIndex = edge.second;
+                tt = 0;
+            }
+            if(match2 != std::numeric_limits<size_t>::max()) {
+                sharedTriangleIndex = match2;
+                outsideVertexPointsIndex = edge.first;
+                tt = 1;
+            }
+            assert(sharedTriangleIndex != 4);
+            assert(sharedTriangleIndex < 3);
+            assert(outsideVertexPointsIndex != 4);
+
+            const size_t sharedVertexPointsIndex = triangle.vertexIndex[sharedTriangleIndex];
+
+            // sharedTriangleIndex 0 1 2 pointer to triangle.vertexIndex[]
+            // outsideVertexPointsIndex pointer to mPoints
+            // sharedVertexPointsIndex pointer to mPoints
+            std::vector<float> ret;
+            Intersection returnVal;
+            if(sharedTriangleIndex == 0) {
+                ret = findIntersection(edge, Edge(triangle.vertexIndex[1], triangle.vertexIndex[2]));
+                returnVal.edgeIntersected = 1;
+            } else if(sharedTriangleIndex == 1) {
+                ret = findIntersection(edge, Edge(triangle.vertexIndex[2], triangle.vertexIndex[0]));
+                returnVal.edgeIntersected = 2;
+            } else if(sharedTriangleIndex == 2) {
+                ret = findIntersection(edge, Edge(triangle.vertexIndex[0], triangle.vertexIndex[1]));
+                returnVal.edgeIntersected = 0;
+            } else {
+                assert(false);
+            }
+
+            if(ret.empty()) {
+                std::cout << "shared vertex empty!\n";
+
+                return {};
+            }
+            assert(ret.size() == 1);
+            returnVal.t = ret[0];
+            returnVal.vertexIntersected = -1;
+            std::vector<Intersection> retVec;
+            retVec.push_back(returnVal);
+            assert(tt <= 1);
+            retVec.emplace_back(tt, sharedTriangleIndex, -1);
+            std::cout << "shared vertex intersection!\n";
+            return retVec;
+        }
+
+        // Non-shared vertex
+        std::vector<Intersection> returnValue;
+
+        auto ret0 = findIntersection(edge, Edge(triangle.vertexIndex[0], triangle.vertexIndex[1]));
+        if(!ret0.empty()) {
+            returnValue.emplace_back(ret0[0], -1, 0);
+        }
+        auto ret1 = findIntersection(edge, Edge(triangle.vertexIndex[1], triangle.vertexIndex[2]));
+        if(!ret1.empty()) {
+            returnValue.emplace_back(ret1[0], -1, 1);
+        }
+        auto ret2 = findIntersection(edge, Edge(triangle.vertexIndex[2], triangle.vertexIndex[0]));
+        if(!ret2.empty()) {
+            returnValue.emplace_back(ret2[0], -1, 2);
+        }
+
+        if(returnValue.empty()) {
+            std::cout << "nonshared vertex empty!\n";
+
+            return {};
+        } else {
+            std::cout << "nonshared vertex intersection!\n";
+            return returnValue;
+        }
+    }
 
     struct LineCoord {
         float t;
@@ -433,10 +517,12 @@ class Geometry {
 
         for(const auto& tri : mTriangles) {
             // If triangle doesnt get intersected, copy it over
-            if(!edgeIntersectsTriangle(edge, tri).has_value()) {
+            auto intersectionWithTri = edgeIntersectsTriangle(edge, tri);
+            if(!intersectionWithTri.has_value()) {
                 newTriangles.emplace_back(tri);
             } else {  // Triangle gets intersected
-                auto intersections = getIntersectingPoints(edge, tri);
+                std::cout << "Intersection!\n";
+                auto intersections = intersectionWithTri.value();
                 assert(intersections.size() == 2);
 
                 // Check if we already inserted the 2 points, if not, insert to mPoints, else retrieve the index
@@ -570,5 +656,7 @@ class Geometry {
                 }
             }
         }
+
+        mTriangles = std::move(newTriangles);
     }
 };

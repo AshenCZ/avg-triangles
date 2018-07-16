@@ -33,20 +33,14 @@ class AppData {
         shape.setOrigin(shape.getRadius(), shape.getRadius());
 
         // Fill Geometry
-        //auto pointsToInsert = {sf::Vector2f(361, 179), sf::Vector2f(291, 251), sf::Vector2f(413, 264),
-        //                       sf::Vector2f(240, 158), sf::Vector2f(172, 247), sf::Vector2f(332, 337),
-        //                       sf::Vector2f(483, 353), sf::Vector2f(411, 419), sf::Vector2f(259, 381),
-        //                       sf::Vector2f(507, 160)};
-        auto pointsToInsert = {sf::Vector2f(200, 200), sf::Vector2f(225, 450), sf::Vector2f(155, 358),
-                               sf::Vector2f(300, 233), sf::Vector2f(362, 390)};
+        auto pointsToInsert = {sf::Vector2f(361, 179), sf::Vector2f(291, 251), sf::Vector2f(413, 264),
+                               sf::Vector2f(240, 158), sf::Vector2f(172, 247), sf::Vector2f(332, 337),
+                               sf::Vector2f(483, 353), sf::Vector2f(411, 419), sf::Vector2f(259, 381),
+                               sf::Vector2f(507, 160)};
+        // auto pointsToInsert = {sf::Vector2f(298, 242), sf::Vector2f(161, 353), sf::Vector2f(362, 394)};
+
         for(const auto& pt : pointsToInsert) {
             geometry.insertPoint(pt);
-        }
-
-        std::vector<sf::Vector2f> newPoints;
-        pattern.getPointsNumber(0, newPoints);
-        for(const auto& point : newPoints) {
-            geometry.insertPoint(point);
         }
     }
 
