@@ -343,4 +343,11 @@ class Geometry {
             insertOnePoint(pt);
         }
     }
+        
+    void reset()
+    {
+        mPoints.clear();
+        mTriangles.clear();
+        fillGeometry();
+    }
 };

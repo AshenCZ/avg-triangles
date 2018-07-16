@@ -41,12 +41,20 @@ class AppData {
         for(const auto& pt : pointsToInsert) {
             geometry.insertPoint(pt);
         }
+
+        std::vector<sf::Vector2f> newPoints;
+        pattern.getPointsNumber(0, newPoints);
+        for(const auto& point : newPoints) {
+            geometry.insertPoint(point);
+        }
     }
 
     void draw(sf::RenderWindow& window) {
         drawUi(window);
         drawGeometry(window);
-        pattern.draw(window);
+        if(uiShow) {
+            pattern.draw(window);
+        }
     }
 
    private:

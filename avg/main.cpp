@@ -34,7 +34,16 @@ void handleEvents(sf::RenderWindow& window, AppData& data) {
             } else if(event.key.code == sf::Keyboard::R) {
                 data.pattern.reset();
             } else if(event.key.code == sf::Keyboard::I) {
+                data.geometry.reset();
                 data.pattern.getNewValues();
+                for(size_t iter = 0; iter < data.pattern.getCount(); ++iter)
+                {
+                    std::vector<sf::Vector2f> newPoints;
+                    data.pattern.getPointsNumber(iter, newPoints);
+                    for(const auto& point : newPoints) {
+                        data.geometry.insertPoint(point);
+                    }
+                }
             }
             break;
         case sf::Event::MouseButtonPressed: {
