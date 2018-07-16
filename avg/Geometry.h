@@ -30,6 +30,51 @@ class Geometry {
     std::vector<sf::Vector2f> mPoints;
     std::vector<Triangle> mTriangles;
 
+   public:
+    Geometry() {
+        fillGeometry();
+    }
+
+    void insertPoint(const sf::Vector2f point) {
+        insertOnePoint(point);
+    }
+
+    const std::vector<sf::Vector2f>& getPoints() const {
+        return mPoints;
+    }
+
+    std::vector<Triangle>& getTriangles() {
+        return mTriangles;
+    }
+
+    void triangulate() {
+        if(mPoints.size() < 3) {
+            return;
+        }
+
+        // Reset triangles
+        mTriangles.clear();
+
+        // Move points
+        auto oldPoints = std::move(mPoints);
+        mPoints.clear();
+        mPoints.reserve(oldPoints.size());
+
+        // Insert point by point
+        for(auto& pt : oldPoints) {
+            insertOnePoint(pt);
+        }
+    }
+
+    void reset() {
+        mPoints.clear();
+        mTriangles.clear();
+        fillGeometry();
+    }
+
+   private:
+    /// Triangulation methods
+
     // Method taken from https://github.com/Bl4ckb0ne/delaunay-triangulation
     static bool circumCircleContains(const sf::Vector2f& v, const sf::Vector2f& p1, const sf::Vector2f& p2,
                                      const sf::Vector2f& p3) {
@@ -308,46 +353,203 @@ class Geometry {
         queueFlip(newTriangles);
     }
 
-   public:
-    Geometry() {
-        fillGeometry();
+    /// Line - Intersection methods
+
+    static bool edgeIntersectsEdge(const Edge& left, const Edge& right) {
+        return false;
     }
 
-    void insertPoint(const sf::Vector2f point) {
-        insertOnePoint(point);
-    }
-
-    const std::vector<sf::Vector2f>& getPoints() const {
-        return mPoints;
-    }
-
-    std::vector<Triangle>& getTriangles() {
-        return mTriangles;
-    }
-
-    void triangulate() {
-        if(mPoints.size() < 3) {
-            return;
-        }
-
-        // Reset triangles
-        mTriangles.clear();
-
-        // Move points
-        auto oldPoints = std::move(mPoints);
-        mPoints.clear();
-        mPoints.reserve(oldPoints.size());
-
-        // Insert point by point
-        for(auto& pt : oldPoints) {
-            insertOnePoint(pt);
-        }
-    }
-        
-    void reset()
+    struct Intersection
     {
-        mPoints.clear();
-        mTriangles.clear();
-        fillGeometry();
+        /// Parameter of the edge to get the intersection point [0,1]
+        float t= -1;
+
+        /// Indicates whether a vertex of the triangle was intersected, contains which one {0, 1, 2}
+        int vertexIntersected = -1;
+
+        /// Indicates whether an edge of the triangle was intersected, contains which one {0, 1, 2}
+        /// 0 = between 0 and 1
+        /// 1 = between 1 and 2
+        /// 2 = between 2 and 0
+        int edgeIntersected = -1;
+    };
+
+    static std::optional<std::vector<Intersection>> edgeIntersectsTriangle(const Edge& edge, const Triangle& triangle) {
+        return {};
+    }
+
+    std::vector<Intersection> getIntersectingPoints(const Edge& edge, const Triangle& triangle) {
+        std::vector<Intersection> retPoints;
+        for(const Triangle& tri : mTriangles) {
+            // Get intersection data
+            auto intersectMaybe = edgeIntersectsTriangle(edge, tri);
+            // Check intersection
+            if(intersectMaybe.has_value()) {
+                auto points = intersectMaybe.value();
+                // Add intersection points to final list
+                for(auto p : points) {
+                    retPoints.emplace_back(p);
+                }
+            }
+        }
+
+        // EPS error balancing maybe?
+        // sort array
+        // compare neighbours, cull if they are EPS close
+
+        return retPoints;
+    };
+
+    struct LineCoord
+    {
+        float t;
+        size_t pointsIndex;
+    };
+
+    static bool epsEqual(const float a, const float b, const float EPS = 0.00001f)
+    {
+        return abs(a - b) < EPS;
+    }
+
+    size_t getIndexOfNewPoint(std::vector<LineCoord>& inserted, float newPt, sf::Vector2f pos, sf::Vector2f dir) {
+        for(const LineCoord& oldPt : inserted)
+        {
+            if(epsEqual(oldPt.t, newPt))
+            {
+                return oldPt.pointsIndex;
+            }
+        }
+        mPoints.emplace_back(pos + newPt * dir);
+        LineCoord newIns{};
+        newIns.t = newPt;
+        newIns.pointsIndex = mPoints.size() - 1;
+        inserted.emplace_back(newIns);
+        return newIns.pointsIndex;
+    }
+
+    void insertEdge(const Edge& edge) {
+        const sf::Vector2f pos = mPoints[edge.first];
+        const sf::Vector2f dir = mPoints[edge.second] - mPoints[edge.first];
+
+        std::vector<Triangle> newTriangles;
+        newTriangles.reserve(mTriangles.size());
+
+        std::vector<LineCoord> inserted;
+
+        for(const auto& tri : mTriangles) {
+            // If triangle doesnt get intersected, copy it over
+            if(!edgeIntersectsTriangle(edge, tri).has_value()) {
+                newTriangles.emplace_back(tri);
+            } else {  // Triangle gets intersected
+                auto intersections = getIntersectingPoints(edge, tri);
+                assert(intersections.size() == 2);
+
+                // Check if we already inserted the 2 points, if not, insert to mPoints, else retrieve the index
+                const size_t newPtIndex0 = getIndexOfNewPoint(inserted, intersections[0].t, pos, dir);
+                const size_t newPtIndex1 = getIndexOfNewPoint(inserted, intersections[1].t, pos, dir);
+
+                // Do we have a 5 point polygon or 4 point polygon (triangle intersected vertex-side, or side-side)?
+                if(intersections[0].edgeIntersected != -1 && intersections[1].edgeIntersected != -1)
+                {
+                    // 5 point polygon
+                    if(intersections[0].edgeIntersected + intersections[1].edgeIntersected == 1) { // 0 and 1
+                        size_t indexEdge0 = std::numeric_limits<size_t>::max();
+                        size_t indexEdge1 = std::numeric_limits<size_t>::max();
+                        if(intersections[0].edgeIntersected == 0) {
+                            indexEdge0 = newPtIndex0;
+                            indexEdge1 = newPtIndex1;
+                        } else {
+                            indexEdge0 = newPtIndex1;
+                            indexEdge1 = newPtIndex0;
+                        }
+                        assert(indexEdge0 != std::numeric_limits<size_t>::max() &&
+                               indexEdge1 != std::numeric_limits<size_t>::max());
+                        // triangle triangle.vertex==1, intersect.edge==0, intersect.edge==1
+                        newTriangles.emplace_back(tri.vertexIndex[1], indexEdge0, indexEdge1);
+                        
+                        // triangle triangle.vertex==2, intersect.edge==0, triangle.vertex==0
+                        newTriangles.emplace_back(tri.vertexIndex[2], indexEdge0, tri.vertexIndex[0]);
+
+                        // triangle triangle.vertex==2, intersect.edge==1, intersect.edge==0
+                        newTriangles.emplace_back(tri.vertexIndex[2], indexEdge1, indexEdge0);
+                    }                                                                             
+                    if(intersections[0].edgeIntersected + intersections[1].edgeIntersected == 2) {  // 2 and 0
+                        size_t indexEdge0 = std::numeric_limits<size_t>::max();
+                        size_t indexEdge2 = std::numeric_limits<size_t>::max();
+                        if(intersections[0].edgeIntersected == 0) {
+                            indexEdge0 = newPtIndex0;
+                            indexEdge2 = newPtIndex1;
+                        } else {
+                            indexEdge0 = newPtIndex1;
+                            indexEdge2 = newPtIndex0;
+                        }
+                        assert(indexEdge0 != std::numeric_limits<size_t>::max() &&
+                               indexEdge2 != std::numeric_limits<size_t>::max());
+                        // triangle triangle.vertex==0,intersect.edge==2,intersect.edge==0
+                        newTriangles.emplace_back(tri.vertexIndex[0], indexEdge2, indexEdge0);
+
+                        // triangle triangle.vertex==1, intersect.edge==2, triangle.vertex==2
+                        newTriangles.emplace_back(tri.vertexIndex[1], indexEdge2, tri.vertexIndex[2]);
+
+                        // triangle triangle.vertex==1, intersect.edge==0, intersect.edge==2
+                        newTriangles.emplace_back(tri.vertexIndex[1], indexEdge0, indexEdge2);
+                    }
+                    if(intersections[0].edgeIntersected + intersections[1].edgeIntersected == 3) { // 1 and 2
+                        size_t indexEdge1 = std::numeric_limits<size_t>::max();
+                        size_t indexEdge2 = std::numeric_limits<size_t>::max();
+                        if(intersections[0].edgeIntersected == 1) {
+                            indexEdge1 = newPtIndex0;
+                            indexEdge2 = newPtIndex1;
+                        } else {
+                            indexEdge1 = newPtIndex1;
+                            indexEdge2 = newPtIndex0;
+                        }
+                        assert(indexEdge1 != std::numeric_limits<size_t>::max() &&
+                               indexEdge2 != std::numeric_limits<size_t>::max());
+                        // triangle triangle.vertex==2,intersect.edge==1, intersect.edge==2
+                        newTriangles.emplace_back(tri.vertexIndex[2], indexEdge1, indexEdge2);
+                        // triangle triangle.vertex==1, triangle.vertex==0, intersect.edge==2
+                        newTriangles.emplace_back(tri.vertexIndex[1], tri.vertexIndex[0], indexEdge2);
+                        // triangle triangle.vertex==1, intersect.edge==2, intersect.edge==1
+                        newTriangles.emplace_back(tri.vertexIndex[1], indexEdge2, indexEdge1);
+                    }                                                                             
+                } else
+                {
+                    // 4 point polygon
+                    Intersection vert;
+                    size_t vertInd = std::numeric_limits<size_t>::max();
+                    Intersection edg;
+                    size_t edgInd = std::numeric_limits<size_t>::max();
+
+                    if(intersections[0].edgeIntersected == -1)
+                    {
+                        vert = intersections[0];
+                        vertInd = newPtIndex0;
+                        edg = intersections[1];
+                        edgInd = newPtIndex1;
+                        assert(intersections[1].edgeIntersected != -1 && intersections[0].vertexIntersected != -1);
+                    } else if(intersections[1].edgeIntersected == -1)
+                    {
+                        vert = intersections[1];
+                        vertInd = newPtIndex1;
+                        edg = intersections[0];
+                        edgInd = newPtIndex0;
+                        assert(intersections[0].edgeIntersected != -1 && intersections[1].vertexIntersected != -1);
+                    } else
+                    {
+                        assert(false);
+                    }
+                    assert(vertInd != std::numeric_limits<size_t>::max());
+                    assert(edgInd != std::numeric_limits<size_t>::max());
+
+                    assert(vert.vertexIntersected != -1);
+                    assert(edg.edgeIntersected != -1);
+
+                    // Indices to mPoints for all 4 points
+                    assert()
+                    size_t vertInterInd = 
+                }
+            }
+        }
     }
 };

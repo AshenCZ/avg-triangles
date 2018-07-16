@@ -7,12 +7,15 @@
 using Edge = std::pair<size_t, size_t>;
 
 class Pattern {
-    std::vector<Edge> mEdgesInLetter = {Edge(0, 1), Edge(1, 2), Edge(2, 3), Edge(3, 4),
-                                        Edge(4, 5), Edge(5, 6), Edge(6, 7), Edge(7, 0)};
+    //std::vector<Edge> mEdgesInLetter = {Edge(0, 1), Edge(1, 2), Edge(2, 3), Edge(3, 4),
+    //                                    Edge(4, 5), Edge(5, 6), Edge(6, 7), Edge(7, 0)};
 
-    std::vector<sf::Vector2f> mPointsInLetter = {sf::Vector2f(0, 0),   sf::Vector2f(70, 0),  sf::Vector2f(70, 20),
-                                                 sf::Vector2f(45, 20), sf::Vector2f(45, 80), sf::Vector2f(25, 85),
-                                                 sf::Vector2f(25, 20), sf::Vector2f(0, 20)};
+    //std::vector<sf::Vector2f> mPointsInLetter = {sf::Vector2f(0, 0),   sf::Vector2f(70, 0),  sf::Vector2f(70, 20),
+    //                                             sf::Vector2f(45, 20), sf::Vector2f(45, 80), sf::Vector2f(25, 85),
+    //                                             sf::Vector2f(25, 20), sf::Vector2f(0, 20)};
+     std::vector<Edge> mEdgesInLetter = {Edge(0, 1)};
+
+     std::vector<sf::Vector2f> mPointsInLetter = {sf::Vector2f(0, 0), sf::Vector2f(25, 250)};
 
     size_t mCount = 1;
     sf::Vector2f mDirection = sf::Vector2f(75, 75);
