@@ -31,7 +31,17 @@ class AppData {
         shape.setRadius(3.f);
         shape.setFillColor(sf::Color::Green);
         shape.setOrigin(shape.getRadius(), shape.getRadius());
+    }
 
+    void draw(sf::RenderWindow& window) {
+        drawUi(window);
+        drawGeometry(window);
+        if(uiShow) {
+            pattern.draw(window);
+        }
+    }
+
+    void insertDummyData() {
         // Fill Geometry
         auto pointsToInsert = {sf::Vector2f(361, 179), sf::Vector2f(291, 251), sf::Vector2f(413, 264),
                                sf::Vector2f(240, 158), sf::Vector2f(172, 247), sf::Vector2f(332, 337),
@@ -41,14 +51,6 @@ class AppData {
 
         for(const auto& pt : pointsToInsert) {
             geometry.insertPoint(pt);
-        }
-    }
-
-    void draw(sf::RenderWindow& window) {
-        drawUi(window);
-        drawGeometry(window);
-        if(uiShow) {
-            pattern.draw(window);
         }
     }
 

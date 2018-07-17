@@ -4,9 +4,10 @@
 #include <cassert>
 #include <optional>
 #include <vector>
+#include <iostream>
+#include <unordered_map>
 
 #include <SFML/Graphics.hpp>
-#include <unordered_map>
 
 using Edge = std::pair<size_t, size_t>;
 
@@ -359,9 +360,10 @@ class Geometry {
 
     /// Line - Intersection methods
 
-    static bool edgeIntersectsEdge(const Edge& left, const Edge& right) {
-        return false;
-    }
+    bool checkBelongLineSeg(const sf::Vector2f seg1, const sf::Vector2f seg2, const sf::Vector2f point, float& outCross,
+                   const float EPS) const;
+
+    std::vector<float> returnParametricIntersection(const Edge line1, const Edge line2);
 
     struct Intersection {
         /// Parameter of the edge to get the intersection point [0,1]
@@ -429,13 +431,13 @@ class Geometry {
             std::vector<float> ret;
             Intersection returnVal;
             if(sharedTriangleIndex == 0) {
-                ret = findIntersection(edge, Edge(triangle.vertexIndex[1], triangle.vertexIndex[2]));
+                ret = returnParametricIntersection(edge, Edge(triangle.vertexIndex[1], triangle.vertexIndex[2]));
                 returnVal.edgeIntersected = 1;
             } else if(sharedTriangleIndex == 1) {
-                ret = findIntersection(edge, Edge(triangle.vertexIndex[2], triangle.vertexIndex[0]));
+                ret = returnParametricIntersection(edge, Edge(triangle.vertexIndex[2], triangle.vertexIndex[0]));
                 returnVal.edgeIntersected = 2;
             } else if(sharedTriangleIndex == 2) {
-                ret = findIntersection(edge, Edge(triangle.vertexIndex[0], triangle.vertexIndex[1]));
+                ret = returnParametricIntersection(edge, Edge(triangle.vertexIndex[0], triangle.vertexIndex[1]));
                 returnVal.edgeIntersected = 0;
             } else {
                 assert(false);
@@ -460,15 +462,15 @@ class Geometry {
         // Non-shared vertex
         std::vector<Intersection> returnValue;
 
-        auto ret0 = findIntersection(edge, Edge(triangle.vertexIndex[0], triangle.vertexIndex[1]));
+        auto ret0 = returnParametricIntersection(edge, Edge(triangle.vertexIndex[0], triangle.vertexIndex[1]));
         if(!ret0.empty()) {
             returnValue.emplace_back(ret0[0], -1, 0);
         }
-        auto ret1 = findIntersection(edge, Edge(triangle.vertexIndex[1], triangle.vertexIndex[2]));
+        auto ret1 = returnParametricIntersection(edge, Edge(triangle.vertexIndex[1], triangle.vertexIndex[2]));
         if(!ret1.empty()) {
             returnValue.emplace_back(ret1[0], -1, 1);
         }
-        auto ret2 = findIntersection(edge, Edge(triangle.vertexIndex[2], triangle.vertexIndex[0]));
+        auto ret2 = returnParametricIntersection(edge, Edge(triangle.vertexIndex[2], triangle.vertexIndex[0]));
         if(!ret2.empty()) {
             returnValue.emplace_back(ret2[0], -1, 2);
         }

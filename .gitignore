@@ -307,3 +307,5 @@ OpenCover/
 CL/
 data/
 docs/
+
+avg/Geometry.cpp
