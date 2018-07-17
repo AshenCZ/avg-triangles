@@ -54,7 +54,36 @@ class AppData {
         }
     }
 
+    void insertPattern() {
+        const size_t patternCount = pattern.getCount();
+        assert(patternCount > 0);
+
+        for(size_t i = 0; i < patternCount; ++i) {
+            insertOnePattern(i);
+        }
+    }
+
    private:
+    void insertOnePattern(const size_t number) {
+        std::vector<sf::Vector2f> patternPoints;
+        pattern.getPointsNumber(number, patternPoints);
+
+        const size_t sizeBeforeInsert = geometry.getPoints().size();
+
+        for(const auto& point : patternPoints) {
+            geometry.insertPoint(point);
+        }
+
+        std::cout << "Pattern points inserted.\n";
+
+        for(const auto& edge : pattern.getEdges()) {
+            Edge e(edge.first + sizeBeforeInsert, edge.second + sizeBeforeInsert);
+            geometry.inputEdge(e);
+        }
+
+        std::cout << "Edges inserted.\n";
+    }
+
     static void fillUi(std::vector<sf::Text>& uiText, std::vector<sf::RectangleShape>& uiRects, const sf::Font& font) {
         sf::RectangleShape triangulateButton(sf::Vector2f(75, 25));
         triangulateButton.setPosition(15, 80);
