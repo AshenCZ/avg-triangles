@@ -2,10 +2,11 @@
 
 #include <array>
 #include <cassert>
-#include <optional>
-#include <vector>
 #include <iostream>
+#include <optional>
 #include <unordered_map>
+#include <vector>
+#include <deque>
 
 #include <SFML/Graphics.hpp>
 
@@ -176,7 +177,7 @@ class Geometry {
     }
 
     std::vector<Edge> flip(size_t triangleIndex, const size_t vert1, const size_t vert2) {
-        const Triangle& triangle = mTriangles[triangleIndex];
+        const Triangle triangle = mTriangles[triangleIndex];
         const size_t vertexIndex1 = triangle.vertexIndex[vert1];
         const size_t vertexIndex2 = triangle.vertexIndex[vert2];
         const size_t aIndex = triangle.vertexIndex[3 - vert1 - vert2];  // 0 1 2, I want the third, sum = 3
@@ -203,7 +204,7 @@ class Geometry {
 
         const size_t neighbourIndex = incidents[whichTriIsNew].triangleIndex;  // index into mTriangles
         assert(neighbourIndex < mTriangles.size());
-        const Triangle& neighbour = mTriangles[neighbourIndex];
+        const Triangle neighbour = mTriangles[neighbourIndex];
 
         // Check condition
         const size_t dIndex =
@@ -218,6 +219,8 @@ class Geometry {
         }
         // If true
         else {
+            assert(aIndex != vertexIndex1 && vertexIndex1 != dIndex && aIndex != dIndex);
+            assert(aIndex != dIndex && dIndex != vertexIndex2 && vertexIndex2 != aIndex);
             // Flip
             if(triangleIndex > neighbourIndex) {
                 mTriangles.erase(mTriangles.begin() + triangleIndex);
@@ -316,8 +319,13 @@ class Geometry {
 
         const size_t pointIndex = mPoints.size() - 1;
         mTriangles.emplace_back(vertexIndices[0], vertexIndices[1], pointIndex);
+        assert(vertexIndices[0] != vertexIndices[1] && vertexIndices[1] != pointIndex && pointIndex != vertexIndices[0]);
+
         mTriangles.emplace_back(pointIndex, vertexIndices[1], vertexIndices[2]);
+        assert(pointIndex != vertexIndices[1] && vertexIndices[1] != vertexIndices[2] && pointIndex != vertexIndices[2]);
+
         mTriangles.emplace_back(vertexIndices[0], pointIndex, vertexIndices[2]);
+        assert(vertexIndices[0] != pointIndex && pointIndex != vertexIndices[2] && vertexIndices[0] != vertexIndices[2]);
 
         assert(priorTriSize + 2 == mTriangles.size());
         return std::array<Edge, 3>({Edge({vertexIndices[0], vertexIndices[1]}),
@@ -326,18 +334,18 @@ class Geometry {
     }
 
     void queueFlip(const std::array<Edge, 3>& edgesToCheck) {
-        std::vector<Edge> queue;
+        std::deque<Edge> queue;
         std::copy(edgesToCheck.begin(), edgesToCheck.end(), std::back_inserter(queue));
         assert(queue.size() == 3);
 
         while(!queue.empty()) {
             // check one edge
-            const Edge current = queue.back();
+            const Edge current = queue.front();
             const EdgeSearchResult result = findTriangleWithEdge(current)[0];
             std::vector<Edge> newEdgesToFlip = flip(result.triangleIndex, result.vertexIndex1, result.vertexIndex2);
 
             // remove from list
-            queue.pop_back();
+            queue.pop_front();
 
             // add new flipped
             for(Edge& e : newEdgesToFlip) {
@@ -361,7 +369,7 @@ class Geometry {
     /// Line - Intersection methods
 
     bool checkBelongLineSeg(const sf::Vector2f seg1, const sf::Vector2f seg2, const sf::Vector2f point, float& outCross,
-                   const float EPS) const;
+                            const float EPS) const;
 
     std::vector<float> returnParametricIntersection(const Edge line1, const Edge line2);
 
@@ -399,7 +407,6 @@ class Geometry {
         // 2 shared vertices? \todo ! mark edge as important
         if(match1 != std::numeric_limits<size_t>::max() && match2 != std::numeric_limits<size_t>::max()) {
             // completely hidden within and edge
-            std::cout << "ende hier.\n";
             return {};
         }
 
@@ -444,8 +451,6 @@ class Geometry {
             }
 
             if(ret.empty()) {
-                std::cout << "shared vertex empty!\n";
-
                 return {};
             }
             assert(ret.size() == 1);
@@ -455,7 +460,6 @@ class Geometry {
             retVec.push_back(returnVal);
             assert(tt <= 1);
             retVec.emplace_back(tt, sharedTriangleIndex, -1);
-            std::cout << "shared vertex intersection!\n";
             return retVec;
         }
 
@@ -476,11 +480,8 @@ class Geometry {
         }
 
         if(returnValue.empty()) {
-            std::cout << "nonshared vertex empty!\n";
-
             return {};
         } else {
-            std::cout << "nonshared vertex intersection!\n";
             return returnValue;
         }
     }
@@ -500,7 +501,9 @@ class Geometry {
                 return oldPt.pointsIndex;
             }
         }
-        mPoints.emplace_back(pos + newPt * dir);
+        sf::Vector2f precise(pos + newPt * dir);
+        sf::Vector2f rouhedDown(std::floor(precise.x), std::floor(precise.y));
+        mPoints.emplace_back(rouhedDown);
         LineCoord newIns{};
         newIns.t = newPt;
         newIns.pointsIndex = mPoints.size() - 1;
@@ -523,7 +526,6 @@ class Geometry {
             if(!intersectionWithTri.has_value()) {
                 newTriangles.emplace_back(tri);
             } else {  // Triangle gets intersected
-                std::cout << "Intersection!\n";
                 auto intersections = intersectionWithTri.value();
                 assert(intersections.size() == 2);
 
@@ -557,12 +559,15 @@ class Geometry {
                                indexEdge1 != std::numeric_limits<size_t>::max());
                         // triangle triangle.vertex==1, intersect.edge==0, intersect.edge==1
                         newTriangles.emplace_back(tri.vertexIndex[1], indexEdge0, indexEdge1);
+                        assert(tri.vertexIndex[1] != indexEdge0 && indexEdge0 != indexEdge1 && indexEdge1 != tri.vertexIndex[1]);
 
                         // triangle triangle.vertex==2, intersect.edge==0, triangle.vertex==0
                         newTriangles.emplace_back(tri.vertexIndex[2], indexEdge0, tri.vertexIndex[0]);
+                        assert(tri.vertexIndex[2] != indexEdge0 && indexEdge0 != tri.vertexIndex[0] && tri.vertexIndex[0] != tri.vertexIndex[2]);
 
                         // triangle triangle.vertex==2, intersect.edge==1, intersect.edge==0
                         newTriangles.emplace_back(tri.vertexIndex[2], indexEdge1, indexEdge0);
+                        assert(tri.vertexIndex[2] != indexEdge1 && indexEdge1 != indexEdge0 && indexEdge0 != tri.vertexIndex[2]);
                     }
                     if(intersections[0].edgeIntersected + intersections[1].edgeIntersected == 2) {  // 2 and 0
                         size_t indexEdge0 = std::numeric_limits<size_t>::max();
@@ -578,12 +583,15 @@ class Geometry {
                                indexEdge2 != std::numeric_limits<size_t>::max());
                         // triangle triangle.vertex==0,intersect.edge==2,intersect.edge==0
                         newTriangles.emplace_back(tri.vertexIndex[0], indexEdge2, indexEdge0);
+                        assert(tri.vertexIndex[0] != indexEdge2 && indexEdge2 != indexEdge0 && tri.vertexIndex[0] != indexEdge0);
 
                         // triangle triangle.vertex==1, intersect.edge==2, triangle.vertex==2
                         newTriangles.emplace_back(tri.vertexIndex[1], indexEdge2, tri.vertexIndex[2]);
+                        assert(tri.vertexIndex[1] != indexEdge2 && indexEdge2 != tri.vertexIndex[2] && tri.vertexIndex[1] != tri.vertexIndex[2]);
 
                         // triangle triangle.vertex==1, intersect.edge==0, intersect.edge==2
                         newTriangles.emplace_back(tri.vertexIndex[1], indexEdge0, indexEdge2);
+                        assert(tri.vertexIndex[1] != indexEdge0 && indexEdge0 != indexEdge2 && tri.vertexIndex[1] != indexEdge2);
                     }
                     if(intersections[0].edgeIntersected + intersections[1].edgeIntersected == 3) {  // 1 and 2
                         size_t indexEdge1 = std::numeric_limits<size_t>::max();
@@ -599,10 +607,13 @@ class Geometry {
                                indexEdge2 != std::numeric_limits<size_t>::max());
                         // triangle triangle.vertex==2,intersect.edge==1, intersect.edge==2
                         newTriangles.emplace_back(tri.vertexIndex[2], indexEdge1, indexEdge2);
+                        assert(tri.vertexIndex[2] != indexEdge1 && indexEdge1 != indexEdge2 && tri.vertexIndex[2] != indexEdge2);
                         // triangle triangle.vertex==1, triangle.vertex==0, intersect.edge==2
                         newTriangles.emplace_back(tri.vertexIndex[1], tri.vertexIndex[0], indexEdge2);
+                        assert(tri.vertexIndex[1] != tri.vertexIndex[0] && tri.vertexIndex[0] != indexEdge2 && tri.vertexIndex[1] != indexEdge2);
                         // triangle triangle.vertex==1, intersect.edge==2, intersect.edge==1
                         newTriangles.emplace_back(tri.vertexIndex[1], indexEdge2, indexEdge1);
+                        assert(tri.vertexIndex[1] != indexEdge2 && indexEdge2 != indexEdge1 && tri.vertexIndex[1] != indexEdge1);
                     }
                 } else {
                     // 4 point polygon
@@ -643,15 +654,24 @@ class Geometry {
                     if(vert.vertexIntersected == 0)  // vertex shared is 0 {
                     {
                         newTriangles.emplace_back(vertInd, tri.vertexIndex[1], edgInd);
+                        assert(vertInd != tri.vertexIndex[1] && tri.vertexIndex[1] != edgInd && edgInd != vertInd);
+
                         newTriangles.emplace_back(vertInd, edgInd, tri.vertexIndex[2]);
+                        assert(vertInd != edgInd && edgInd != tri.vertexIndex[2] && tri.vertexIndex[2] != vertInd);
                     } else if(vert.vertexIntersected == 1)  // vertex shared is 1
                     {
                         newTriangles.emplace_back(vertInd, tri.vertexIndex[2], edgInd);
+                        assert(vertInd != tri.vertexIndex[2] && tri.vertexIndex[2] != edgInd && edgInd != vertInd);
+
                         newTriangles.emplace_back(edgInd, tri.vertexIndex[0], vertInd);
+                        assert(edgInd != tri.vertexIndex[0] && tri.vertexIndex[0] != vertInd && vertInd != edgInd);
                     } else if(vert.vertexIntersected == 2)  // vertex shared is 2
                     {
                         newTriangles.emplace_back(vertInd, tri.vertexIndex[0], edgInd);
+                        assert(vertInd != tri.vertexIndex[0] && tri.vertexIndex[0] != edgInd && vertInd != edgInd);
+
                         newTriangles.emplace_back(edgInd, tri.vertexIndex[1], vertInd);
+                        assert(edgInd != tri.vertexIndex[1] && tri.vertexIndex[1] != vertInd && vertInd != edgInd);
                     } else {
                         assert(false);
                     }

@@ -32,7 +32,10 @@ void handleEvents(sf::RenderWindow& window, AppData& data) {
                     std::cout << "sf::Vector2f(" << p.x << "," << p.y << "), ";
                 }
             } else if(event.key.code == sf::Keyboard::R) {
-                data.pattern.reset();
+                data.geometry.reset();
+                //data.pattern.reset();
+            } else if(event.key.code == sf::Keyboard::F1) {
+                data.insertDummyData();
             } else if(event.key.code == sf::Keyboard::G) {
                 data.pattern.reset();
                 std::vector<sf::Vector2f> newPoints;
