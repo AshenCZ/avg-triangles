@@ -62,6 +62,10 @@ class ImportantEdges {
     bool isImportant(const Edge edge) const {
         return contains(edge);
     }
+
+    void reset() {
+        importantEdges.clear();
+    }
 };
 
 class Geometry {
@@ -111,6 +115,7 @@ class Geometry {
         mPoints.clear();
         mTriangles.clear();
         fillGeometry();
+        important.reset();
     }
 
     void inputEdge(const Edge& edge) {
@@ -568,7 +573,22 @@ class Geometry {
             // If triangle doesnt get intersected, copy it over
             auto intersectionWithTri = edgeIntersectsTriangle(edge, tri);
             if(!intersectionWithTri.has_value()) {
+                // Insert the triangle
                 newTriangles.emplace_back(tri);
+                // Insert its potential important edge
+                bool contains1 = false;
+                bool contains2 = false;
+                for(int i = 0; i < 3; ++i) {
+                    if(tri.vertexIndex[i] == edge.first) {
+                        contains1 = true;
+                    }
+                    if(tri.vertexIndex[i] == edge.second) {
+                        contains2 = true;
+                    }
+                }
+                if(contains1 && contains2) {
+                    important.insertEdge(edge);
+                }
             } else {  // Triangle gets intersected
                 auto intersections = intersectionWithTri.value();
                 assert(intersections.size() == 2);
