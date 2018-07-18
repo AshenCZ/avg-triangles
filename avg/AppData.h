@@ -74,8 +74,7 @@ class AppData {
         }
 
         // Cut all edges
-        for(size_t i = 0; i < patternCount; ++i)
-        {
+        for(size_t i = 0; i < patternCount; ++i) {
             const size_t patternEdgeOffset = i * patternSize;
             const size_t offset = sizeBeforeInsert + patternEdgeOffset;
             for(const auto& edge : pattern.getEdges()) {
@@ -149,8 +148,12 @@ class AppData {
             }
             std::array<std::pair<size_t, size_t>, 3> pairs = {std::pair<size_t, size_t>(0, 1), {1, 2}, {2, 0}};
             for(const auto& side : pairs) {
-                sf::Vertex line[] = {sf::Vertex(points[tri.vertexIndex[side.first]], sf::Color::White),
-                                     sf::Vertex(points[tri.vertexIndex[side.second]], sf::Color::White)};
+                sf::Color edgeColor = sf::Color::White;
+                if(geometry.important.isImportant(Edge(tri.vertexIndex[side.first], tri.vertexIndex[side.second]))) {
+                    edgeColor = sf::Color::Magenta;
+                }
+                sf::Vertex line[] = {sf::Vertex(points[tri.vertexIndex[side.first]], edgeColor),
+                                     sf::Vertex(points[tri.vertexIndex[side.second]], edgeColor)};
                 window.draw(line, 2, sf::Lines);
             }
         }

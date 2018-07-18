@@ -2,11 +2,11 @@
 
 #include <array>
 #include <cassert>
+#include <deque>
 #include <iostream>
 #include <optional>
 #include <unordered_map>
 #include <vector>
-#include <deque>
 
 #include <SFML/Graphics.hpp>
 
@@ -28,11 +28,50 @@ struct pairhash {
     }
 };
 
+class ImportantEdges {
+    /// Pointers to Geometry's mPoints
+    std::vector<Edge> importantEdges;
+
+    bool contains(const Edge e) const {
+        for(const Edge& edge : importantEdges) {
+            if(edge.first == e.first && edge.second == e.second) {
+                return true;
+            }
+            if(edge.second == e.first && edge.first == e.second) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+   public:
+    ImportantEdges() = default;
+
+    void insertEdge(const Edge e) {
+        // Check for duplicates
+        if(contains(e)) {
+            return;
+        }
+
+        // Insert new important edge
+        importantEdges.emplace_back(e);
+
+        std::cout << "Inserted " << e.first << "->" << e.second << " as important.\n";
+    }
+
+    bool isImportant(const Edge edge) const {
+        return contains(edge);
+    }
+};
+
 class Geometry {
     std::vector<sf::Vector2f> mPoints;
     std::vector<Triangle> mTriangles;
 
+
    public:
+    ImportantEdges important;
+
     Geometry() {
         fillGeometry();
     }
@@ -319,13 +358,16 @@ class Geometry {
 
         const size_t pointIndex = mPoints.size() - 1;
         mTriangles.emplace_back(vertexIndices[0], vertexIndices[1], pointIndex);
-        assert(vertexIndices[0] != vertexIndices[1] && vertexIndices[1] != pointIndex && pointIndex != vertexIndices[0]);
+        assert(vertexIndices[0] != vertexIndices[1] && vertexIndices[1] != pointIndex &&
+               pointIndex != vertexIndices[0]);
 
         mTriangles.emplace_back(pointIndex, vertexIndices[1], vertexIndices[2]);
-        assert(pointIndex != vertexIndices[1] && vertexIndices[1] != vertexIndices[2] && pointIndex != vertexIndices[2]);
+        assert(pointIndex != vertexIndices[1] && vertexIndices[1] != vertexIndices[2] &&
+               pointIndex != vertexIndices[2]);
 
         mTriangles.emplace_back(vertexIndices[0], pointIndex, vertexIndices[2]);
-        assert(vertexIndices[0] != pointIndex && pointIndex != vertexIndices[2] && vertexIndices[0] != vertexIndices[2]);
+        assert(vertexIndices[0] != pointIndex && pointIndex != vertexIndices[2] &&
+               vertexIndices[0] != vertexIndices[2]);
 
         assert(priorTriSize + 2 == mTriangles.size());
         return std::array<Edge, 3>({Edge({vertexIndices[0], vertexIndices[1]}),
@@ -561,15 +603,18 @@ class Geometry {
                                indexEdge1 != std::numeric_limits<size_t>::max());
                         // triangle triangle.vertex==1, intersect.edge==0, intersect.edge==1
                         newTriangles.emplace_back(tri.vertexIndex[1], indexEdge0, indexEdge1);
-                        assert(tri.vertexIndex[1] != indexEdge0 && indexEdge0 != indexEdge1 && indexEdge1 != tri.vertexIndex[1]);
+                        assert(tri.vertexIndex[1] != indexEdge0 && indexEdge0 != indexEdge1 &&
+                               indexEdge1 != tri.vertexIndex[1]);
 
                         // triangle triangle.vertex==2, intersect.edge==0, triangle.vertex==0
                         newTriangles.emplace_back(tri.vertexIndex[2], indexEdge0, tri.vertexIndex[0]);
-                        assert(tri.vertexIndex[2] != indexEdge0 && indexEdge0 != tri.vertexIndex[0] && tri.vertexIndex[0] != tri.vertexIndex[2]);
+                        assert(tri.vertexIndex[2] != indexEdge0 && indexEdge0 != tri.vertexIndex[0] &&
+                               tri.vertexIndex[0] != tri.vertexIndex[2]);
 
                         // triangle triangle.vertex==2, intersect.edge==1, intersect.edge==0
                         newTriangles.emplace_back(tri.vertexIndex[2], indexEdge1, indexEdge0);
-                        assert(tri.vertexIndex[2] != indexEdge1 && indexEdge1 != indexEdge0 && indexEdge0 != tri.vertexIndex[2]);
+                        assert(tri.vertexIndex[2] != indexEdge1 && indexEdge1 != indexEdge0 &&
+                               indexEdge0 != tri.vertexIndex[2]);
                     }
                     if(intersections[0].edgeIntersected + intersections[1].edgeIntersected == 2) {  // 2 and 0
                         size_t indexEdge0 = std::numeric_limits<size_t>::max();
@@ -585,15 +630,18 @@ class Geometry {
                                indexEdge2 != std::numeric_limits<size_t>::max());
                         // triangle triangle.vertex==0,intersect.edge==2,intersect.edge==0
                         newTriangles.emplace_back(tri.vertexIndex[0], indexEdge2, indexEdge0);
-                        assert(tri.vertexIndex[0] != indexEdge2 && indexEdge2 != indexEdge0 && tri.vertexIndex[0] != indexEdge0);
+                        assert(tri.vertexIndex[0] != indexEdge2 && indexEdge2 != indexEdge0 &&
+                               tri.vertexIndex[0] != indexEdge0);
 
                         // triangle triangle.vertex==1, intersect.edge==2, triangle.vertex==2
                         newTriangles.emplace_back(tri.vertexIndex[1], indexEdge2, tri.vertexIndex[2]);
-                        assert(tri.vertexIndex[1] != indexEdge2 && indexEdge2 != tri.vertexIndex[2] && tri.vertexIndex[1] != tri.vertexIndex[2]);
+                        assert(tri.vertexIndex[1] != indexEdge2 && indexEdge2 != tri.vertexIndex[2] &&
+                               tri.vertexIndex[1] != tri.vertexIndex[2]);
 
                         // triangle triangle.vertex==1, intersect.edge==0, intersect.edge==2
                         newTriangles.emplace_back(tri.vertexIndex[1], indexEdge0, indexEdge2);
-                        assert(tri.vertexIndex[1] != indexEdge0 && indexEdge0 != indexEdge2 && tri.vertexIndex[1] != indexEdge2);
+                        assert(tri.vertexIndex[1] != indexEdge0 && indexEdge0 != indexEdge2 &&
+                               tri.vertexIndex[1] != indexEdge2);
                     }
                     if(intersections[0].edgeIntersected + intersections[1].edgeIntersected == 3) {  // 1 and 2
                         size_t indexEdge1 = std::numeric_limits<size_t>::max();
@@ -609,13 +657,16 @@ class Geometry {
                                indexEdge2 != std::numeric_limits<size_t>::max());
                         // triangle triangle.vertex==2,intersect.edge==1, intersect.edge==2
                         newTriangles.emplace_back(tri.vertexIndex[2], indexEdge1, indexEdge2);
-                        assert(tri.vertexIndex[2] != indexEdge1 && indexEdge1 != indexEdge2 && tri.vertexIndex[2] != indexEdge2);
+                        assert(tri.vertexIndex[2] != indexEdge1 && indexEdge1 != indexEdge2 &&
+                               tri.vertexIndex[2] != indexEdge2);
                         // triangle triangle.vertex==1, triangle.vertex==0, intersect.edge==2
                         newTriangles.emplace_back(tri.vertexIndex[1], tri.vertexIndex[0], indexEdge2);
-                        assert(tri.vertexIndex[1] != tri.vertexIndex[0] && tri.vertexIndex[0] != indexEdge2 && tri.vertexIndex[1] != indexEdge2);
+                        assert(tri.vertexIndex[1] != tri.vertexIndex[0] && tri.vertexIndex[0] != indexEdge2 &&
+                               tri.vertexIndex[1] != indexEdge2);
                         // triangle triangle.vertex==1, intersect.edge==2, intersect.edge==1
                         newTriangles.emplace_back(tri.vertexIndex[1], indexEdge2, indexEdge1);
-                        assert(tri.vertexIndex[1] != indexEdge2 && indexEdge2 != indexEdge1 && tri.vertexIndex[1] != indexEdge1);
+                        assert(tri.vertexIndex[1] != indexEdge2 && indexEdge2 != indexEdge1 &&
+                               tri.vertexIndex[1] != indexEdge1);
                     }
                 } else {
                     // 4 point polygon
