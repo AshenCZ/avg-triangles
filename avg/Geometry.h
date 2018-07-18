@@ -37,8 +37,8 @@ class Geometry {
         fillGeometry();
     }
 
-    void insertPoint(const sf::Vector2f point) {
-        insertOnePoint(point);
+    void insertPoint(const sf::Vector2f point, bool reTriangulate = true) {
+        insertOnePoint(point, reTriangulate);
     }
 
     const std::vector<sf::Vector2f>& getPoints() const {
@@ -354,7 +354,7 @@ class Geometry {
         }
     }
 
-    void insertOnePoint(const sf::Vector2f point) {
+    void insertOnePoint(const sf::Vector2f point, bool retriangulate = true) {
         mPoints.emplace_back(point.x, point.y);
 
         // Step of incremental triangulation
@@ -362,8 +362,10 @@ class Geometry {
         if(!newTrianglesMaybe.has_value()) {
             return;
         }
-        const std::array<Edge, 3> newTriangles = newTrianglesMaybe.value();
-        queueFlip(newTriangles);
+        if(retriangulate) {
+            const std::array<Edge, 3> newTriangles = newTrianglesMaybe.value();
+            queueFlip(newTriangles);
+        }
     }
 
     /// Line - Intersection methods

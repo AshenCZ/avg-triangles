@@ -74,15 +74,12 @@ class Pattern {
 
     void getPointsNumber(const size_t patternNum, std::vector<sf::Vector2f>& outPoints) {
         assert(patternNum < mCount);
-        outPoints.clear();
-        outPoints.reserve(mPointsInLetter.size());
         const sf::Vector2f currentShift = mStart + sf::Vector2f(patternNum * mDirection.x, patternNum * mDirection.y);
 
         for(size_t i = 0; i < mPointsInLetter.size(); ++i) {
             const sf::Vector2f pt = mPointsInLetter[i] + currentShift;
             outPoints.emplace_back(pt);
         }
-        assert(outPoints.size() == mPointsInLetter.size());
     }
 
    private:

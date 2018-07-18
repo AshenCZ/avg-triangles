@@ -37,33 +37,10 @@ void handleEvents(sf::RenderWindow& window, AppData& data) {
             } else if(event.key.code == sf::Keyboard::F1) {
                 data.insertDummyData();
             } else if(event.key.code == sf::Keyboard::G) {
-                data.pattern.reset();
-                std::vector<sf::Vector2f> newPoints;
-                data.pattern.getPointsNumber(0, newPoints);
-                for(const auto& point : newPoints) {
-                    data.geometry.insertPoint(point);
-                }
-                auto pts = data.geometry.getPoints();
-                Edge e(pts.size() - 2, pts.size() - 1);
-
-                std::cout << "\n\n";
-                for(const auto& p : pts) {
-                    std::cout << "sf::Vector2f(" << p.x << "," << p.y << "), ";
-                }
-                std::cout << "\n\n>>";
-
-                data.geometry.inputEdge(e);
+                data.insertPattern();
             } else if(event.key.code == sf::Keyboard::I) {
                 data.geometry.reset();
                 data.pattern.getNewValues();
-                for(size_t iter = 0; iter < data.pattern.getCount(); ++iter)
-                {
-                    std::vector<sf::Vector2f> newPoints;
-                    data.pattern.getPointsNumber(iter, newPoints);
-                    for(const auto& point : newPoints) {
-                        data.geometry.insertPoint(point);
-                    }
-                }
             }
             break;
         case sf::Event::MouseButtonPressed: {

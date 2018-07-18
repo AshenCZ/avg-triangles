@@ -58,32 +58,34 @@ class AppData {
         const size_t patternCount = pattern.getCount();
         assert(patternCount > 0);
 
+        // Gather all points
+        std::vector<sf::Vector2f> patternPoints;
         for(size_t i = 0; i < patternCount; ++i) {
-            insertOnePattern(i);
+            pattern.getPointsNumber(i, patternPoints);
+        }
+
+        const size_t sizeBeforeInsert = geometry.getPoints().size();
+        const size_t patternSize = pattern.getPoints().size();
+        assert(patternPoints.size() == patternSize * patternCount);
+
+        // Insert all points
+        for(const auto& point : patternPoints) {
+            geometry.insertPoint(point, true);
+        }
+
+        // Cut all edges
+        for(size_t i = 0; i < patternCount; ++i)
+        {
+            const size_t patternEdgeOffset = i * patternSize;
+            const size_t offset = sizeBeforeInsert + patternEdgeOffset;
+            for(const auto& edge : pattern.getEdges()) {
+                Edge e(edge.first + offset, edge.second + offset);
+                geometry.inputEdge(e);
+            }
         }
     }
 
    private:
-    void insertOnePattern(const size_t number) {
-        std::vector<sf::Vector2f> patternPoints;
-        pattern.getPointsNumber(number, patternPoints);
-
-        const size_t sizeBeforeInsert = geometry.getPoints().size();
-
-        for(const auto& point : patternPoints) {
-            geometry.insertPoint(point);
-        }
-
-        std::cout << "Pattern points inserted.\n";
-
-        for(const auto& edge : pattern.getEdges()) {
-            Edge e(edge.first + sizeBeforeInsert, edge.second + sizeBeforeInsert);
-            geometry.inputEdge(e);
-        }
-
-        std::cout << "Edges inserted.\n";
-    }
-
     static void fillUi(std::vector<sf::Text>& uiText, std::vector<sf::RectangleShape>& uiRects, const sf::Font& font) {
         sf::RectangleShape triangulateButton(sf::Vector2f(75, 25));
         triangulateButton.setPosition(15, 80);
