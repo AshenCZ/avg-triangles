@@ -621,6 +621,10 @@ class Geometry {
                         }
                         assert(indexEdge0 != std::numeric_limits<size_t>::max() &&
                                indexEdge1 != std::numeric_limits<size_t>::max());
+
+                        // Register the important edge
+                        important.insertEdge(Edge(indexEdge0, indexEdge1));
+
                         // triangle triangle.vertex==1, intersect.edge==0, intersect.edge==1
                         newTriangles.emplace_back(tri.vertexIndex[1], indexEdge0, indexEdge1);
                         assert(tri.vertexIndex[1] != indexEdge0 && indexEdge0 != indexEdge1 &&
@@ -648,6 +652,10 @@ class Geometry {
                         }
                         assert(indexEdge0 != std::numeric_limits<size_t>::max() &&
                                indexEdge2 != std::numeric_limits<size_t>::max());
+
+                        // Register the important edge
+                        important.insertEdge(Edge(indexEdge0, indexEdge2));
+
                         // triangle triangle.vertex==0,intersect.edge==2,intersect.edge==0
                         newTriangles.emplace_back(tri.vertexIndex[0], indexEdge2, indexEdge0);
                         assert(tri.vertexIndex[0] != indexEdge2 && indexEdge2 != indexEdge0 &&
@@ -675,6 +683,10 @@ class Geometry {
                         }
                         assert(indexEdge1 != std::numeric_limits<size_t>::max() &&
                                indexEdge2 != std::numeric_limits<size_t>::max());
+
+                        // Register the important edge
+                        important.insertEdge(Edge(indexEdge1, indexEdge2));
+
                         // triangle triangle.vertex==2,intersect.edge==1, intersect.edge==2
                         newTriangles.emplace_back(tri.vertexIndex[2], indexEdge1, indexEdge2);
                         assert(tri.vertexIndex[2] != indexEdge1 && indexEdge1 != indexEdge2 &&
@@ -719,6 +731,9 @@ class Geometry {
                     vertInd = tri.vertexIndex[vert.vertexIntersected];
                     assert(vertInd != std::numeric_limits<size_t>::max());
                     assert(edgInd != std::numeric_limits<size_t>::max());
+
+                    // Register the important edge
+                    important.insertEdge(Edge(vertInd, edgInd));
 
                     // The 4 new Indices are:
                     // vertInd - shared by both triangles
