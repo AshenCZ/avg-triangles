@@ -56,7 +56,7 @@ class ImportantEdges {
         // Insert new important edge
         importantEdges.emplace_back(e);
 
-        std::cout << "Inserted " << e.first << "->" << e.second << " as important.\n";
+        // std::cout << "Inserted " << e.first << "->" << e.second << " as important.\n";
     }
 
     bool isImportant(const Edge edge) const {
@@ -559,14 +559,23 @@ class Geometry {
     }
 
     size_t getIndexOfNewPoint(std::vector<LineCoord>& inserted, float newPt, sf::Vector2f pos, sf::Vector2f dir) {
+        sf::Vector2f precise(pos + newPt * dir);
+        // Check if we already added this point in this edge run
         for(const LineCoord& oldPt : inserted) {
             if(epsEqual(oldPt.t, newPt)) {
                 return oldPt.pointsIndex;
             }
         }
-        sf::Vector2f precise(pos + newPt * dir);
+        // Check if such a point already exists in the geometry
+        for(size_t i = 0; i < mPoints.size(); ++i) {
+            const sf::Vector2f& point = mPoints[i];
+            if(epsEqual(precise.x, point.x, 0.51f) && epsEqual(precise.y, point.y, 0.51f)) {
+                return i;
+            }
+        }
         sf::Vector2f rouhedDown(std::floor(precise.x), std::floor(precise.y));
         mPoints.emplace_back(rouhedDown);
+        std::cout << "Inserted " << precise.x << " " << precise.y << " t=" << newPt << "\n";
         LineCoord newIns{};
         newIns.t = newPt;
         newIns.pointsIndex = mPoints.size() - 1;
@@ -749,34 +758,62 @@ class Geometry {
                     // Register the important edge
                     mImportant.insertEdge(Edge(vertInd, edgInd));
 
+                    // Check if we split important edge
+                    Edge splitEdge;
+                    if(edg.edgeIntersected == 0) {
+                        splitEdge = Edge(tri.vertexIndex[0], tri.vertexIndex[1]);
+                    } else if(edg.edgeIntersected == 1) {
+                        splitEdge = Edge(tri.vertexIndex[1], tri.vertexIndex[2]);
+                    } else if(edg.edgeIntersected == 2) {
+                        splitEdge = Edge(tri.vertexIndex[2], tri.vertexIndex[0]);
+                    } else {
+                        splitEdge = Edge(-1, -1);
+                        assert(false);
+                    }
+                    const bool importantEdgeSplit = mImportant.isImportant(splitEdge);
+                    if(importantEdgeSplit) {
+                        mImportant.insertEdge(Edge(splitEdge.first, edgInd));
+                        mImportant.insertEdge(Edge(edgInd, splitEdge.second));
+                        mImportant.removeEdge(splitEdge);
+                    }
+
+                    bool invalid = false;
+                    for(size_t i = 0; i < 3; ++i) {
+                        if(edgInd == tri.vertexIndex[i]) {
+                            invalid = true;
+                        }
+                    }
 
                     // The 4 new Indices are:
                     // vertInd - shared by both triangles
                     // edgInd - shared by both triangles
+                    if(!invalid) {
+                        if(vert.vertexIntersected == 0)  // vertex shared is 0 {
+                        {
+                            newTriangles.emplace_back(vertInd, tri.vertexIndex[1], edgInd);
+                            assert(vertInd != tri.vertexIndex[1] && tri.vertexIndex[1] != edgInd && edgInd != vertInd);
 
-                    if(vert.vertexIntersected == 0)  // vertex shared is 0 {
-                    {
-                        newTriangles.emplace_back(vertInd, tri.vertexIndex[1], edgInd);
-                        assert(vertInd != tri.vertexIndex[1] && tri.vertexIndex[1] != edgInd && edgInd != vertInd);
+                            newTriangles.emplace_back(vertInd, edgInd, tri.vertexIndex[2]);
+                            assert(vertInd != edgInd && edgInd != tri.vertexIndex[2] && tri.vertexIndex[2] != vertInd);
+                        } else if(vert.vertexIntersected == 1)  // vertex shared is 1
+                        {
+                            newTriangles.emplace_back(vertInd, tri.vertexIndex[2], edgInd);
+                            assert(vertInd != tri.vertexIndex[2] && tri.vertexIndex[2] != edgInd && edgInd != vertInd);
 
-                        newTriangles.emplace_back(vertInd, edgInd, tri.vertexIndex[2]);
-                        assert(vertInd != edgInd && edgInd != tri.vertexIndex[2] && tri.vertexIndex[2] != vertInd);
-                    } else if(vert.vertexIntersected == 1)  // vertex shared is 1
-                    {
-                        newTriangles.emplace_back(vertInd, tri.vertexIndex[2], edgInd);
-                        assert(vertInd != tri.vertexIndex[2] && tri.vertexIndex[2] != edgInd && edgInd != vertInd);
+                            newTriangles.emplace_back(edgInd, tri.vertexIndex[0], vertInd);
+                            assert(edgInd != tri.vertexIndex[0] && tri.vertexIndex[0] != vertInd && vertInd != edgInd);
+                        } else if(vert.vertexIntersected == 2)  // vertex shared is 2
+                        {
+                            newTriangles.emplace_back(vertInd, tri.vertexIndex[0], edgInd);
+                            assert(vertInd != tri.vertexIndex[0] && tri.vertexIndex[0] != edgInd && vertInd != edgInd);
 
-                        newTriangles.emplace_back(edgInd, tri.vertexIndex[0], vertInd);
-                        assert(edgInd != tri.vertexIndex[0] && tri.vertexIndex[0] != vertInd && vertInd != edgInd);
-                    } else if(vert.vertexIntersected == 2)  // vertex shared is 2
-                    {
-                        newTriangles.emplace_back(vertInd, tri.vertexIndex[0], edgInd);
-                        assert(vertInd != tri.vertexIndex[0] && tri.vertexIndex[0] != edgInd && vertInd != edgInd);
-
-                        newTriangles.emplace_back(edgInd, tri.vertexIndex[1], vertInd);
-                        assert(edgInd != tri.vertexIndex[1] && tri.vertexIndex[1] != vertInd && vertInd != edgInd);
+                            newTriangles.emplace_back(edgInd, tri.vertexIndex[1], vertInd);
+                            assert(edgInd != tri.vertexIndex[1] && tri.vertexIndex[1] != vertInd && vertInd != edgInd);
+                        } else {
+                            assert(false);
+                        }
                     } else {
-                        assert(false);
+                        newTriangles.emplace_back(tri);
                     }
                 }
             }
