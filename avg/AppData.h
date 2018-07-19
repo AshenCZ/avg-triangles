@@ -28,7 +28,7 @@ class AppData {
         fillUi(uiText, uiRects, font);
 
 
-        shape.setRadius(3.f);
+        shape.setRadius(1.5f);
         shape.setFillColor(sf::Color::Green);
         shape.setOrigin(shape.getRadius(), shape.getRadius());
     }
@@ -149,7 +149,7 @@ class AppData {
             std::array<std::pair<size_t, size_t>, 3> pairs = {std::pair<size_t, size_t>(0, 1), {1, 2}, {2, 0}};
             for(const auto& side : pairs) {
                 sf::Color edgeColor = sf::Color::White;
-                if(geometry.important.isImportant(Edge(tri.vertexIndex[side.first], tri.vertexIndex[side.second]))) {
+                if(geometry.mImportant.isImportant(Edge(tri.vertexIndex[side.first], tri.vertexIndex[side.second]))) {
                     edgeColor = sf::Color::Magenta;
                 }
                 sf::Vertex line[] = {sf::Vertex(points[tri.vertexIndex[side.first]], edgeColor),

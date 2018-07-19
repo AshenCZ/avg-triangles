@@ -74,7 +74,7 @@ class Geometry {
 
 
    public:
-    ImportantEdges important;
+    ImportantEdges mImportant;
 
     Geometry() {
         fillGeometry();
@@ -115,7 +115,7 @@ class Geometry {
         mPoints.clear();
         mTriangles.clear();
         fillGeometry();
-        important.reset();
+        mImportant.reset();
     }
 
     void inputEdge(const Edge& edge) {
@@ -587,7 +587,7 @@ class Geometry {
                     }
                 }
                 if(contains1 && contains2) {
-                    important.insertEdge(edge);
+                    mImportant.insertEdge(edge);
                 }
             } else {  // Triangle gets intersected
                 auto intersections = intersectionWithTri.value();
@@ -605,10 +605,10 @@ class Geometry {
 
                 // Do we have a 5 point polygon or 4 point polygon (triangle intersected vertex-side, or side-side)?
                 if(intersections[0].edgeIntersected != -1 && intersections[1].edgeIntersected != -1) {
+                    // 5 point polygon
                     assert(newPtIndex0 != std::numeric_limits<size_t>::max());
                     assert(newPtIndex1 != std::numeric_limits<size_t>::max());
 
-                    // 5 point polygon
                     if(intersections[0].edgeIntersected + intersections[1].edgeIntersected == 1) {  // 0 and 1
                         size_t indexEdge0 = std::numeric_limits<size_t>::max();
                         size_t indexEdge1 = std::numeric_limits<size_t>::max();
@@ -623,7 +623,7 @@ class Geometry {
                                indexEdge1 != std::numeric_limits<size_t>::max());
 
                         // Register the important edge
-                        important.insertEdge(Edge(indexEdge0, indexEdge1));
+                        mImportant.insertEdge(Edge(indexEdge0, indexEdge1));
 
                         // triangle triangle.vertex==1, intersect.edge==0, intersect.edge==1
                         newTriangles.emplace_back(tri.vertexIndex[1], indexEdge0, indexEdge1);
@@ -654,7 +654,7 @@ class Geometry {
                                indexEdge2 != std::numeric_limits<size_t>::max());
 
                         // Register the important edge
-                        important.insertEdge(Edge(indexEdge0, indexEdge2));
+                        mImportant.insertEdge(Edge(indexEdge0, indexEdge2));
 
                         // triangle triangle.vertex==0,intersect.edge==2,intersect.edge==0
                         newTriangles.emplace_back(tri.vertexIndex[0], indexEdge2, indexEdge0);
@@ -685,7 +685,7 @@ class Geometry {
                                indexEdge2 != std::numeric_limits<size_t>::max());
 
                         // Register the important edge
-                        important.insertEdge(Edge(indexEdge1, indexEdge2));
+                        mImportant.insertEdge(Edge(indexEdge1, indexEdge2));
 
                         // triangle triangle.vertex==2,intersect.edge==1, intersect.edge==2
                         newTriangles.emplace_back(tri.vertexIndex[2], indexEdge1, indexEdge2);
@@ -733,7 +733,8 @@ class Geometry {
                     assert(edgInd != std::numeric_limits<size_t>::max());
 
                     // Register the important edge
-                    important.insertEdge(Edge(vertInd, edgInd));
+                    mImportant.insertEdge(Edge(vertInd, edgInd));
+
 
                     // The 4 new Indices are:
                     // vertInd - shared by both triangles
