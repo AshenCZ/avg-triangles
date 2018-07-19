@@ -107,6 +107,13 @@ class AppData {
         triangulateButtonText.setString("Triangulate");
         triangulateButtonText.setFillColor(sf::Color::White);
         uiText.push_back(triangulateButtonText);
+
+        sf::Text helpText;
+        helpText.setFont(font);
+        helpText.setCharacterSize(13);
+        helpText.setPosition(600, 480);
+        helpText.setString("H to show/hide hidden lines\nF1 to insert small triangulation\nI to enter a new pattern setting\nG to insert pattern\nC for one step of CDT\nR to reset");
+        uiText.push_back(helpText);
     }
 
     void drawUi(sf::RenderWindow& window) {
