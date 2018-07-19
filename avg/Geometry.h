@@ -55,8 +55,6 @@ class ImportantEdges {
 
         // Insert new important edge
         importantEdges.emplace_back(e);
-
-        // std::cout << "Inserted " << e.first << "->" << e.second << " as important.\n";
     }
 
     bool isImportant(const Edge edge) const {
@@ -575,7 +573,6 @@ class Geometry {
         }
         sf::Vector2f rouhedDown(std::floor(precise.x), std::floor(precise.y));
         mPoints.emplace_back(rouhedDown);
-        std::cout << "Inserted " << precise.x << " " << precise.y << " t=" << newPt << "\n";
         LineCoord newIns{};
         newIns.t = newPt;
         newIns.pointsIndex = mPoints.size() - 1;
@@ -856,7 +853,11 @@ class Geometry {
         bool changed = false;
         changed = oneCdtPass();
 
-        std::cout << "Changed: " << changed << "\n";
+        if(changed) {
+            std::cout << "Changed.\n";
+        } else {
+            std::cout << "Not changed.";
+        }
     }
 
     void cdt_all() {
