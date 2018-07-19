@@ -43,7 +43,7 @@ class AppData {
 
     void insertDummyData() {
         // Fill Geometry
-        auto pointsToInsert = {sf::Vector2f(361, 179), sf::Vector2f(291, 251), sf::Vector2f(413, 264),
+        auto pointsToInsert = {sf::Vector2f(361, 179), sf::Vector2f(291, 271), sf::Vector2f(413, 264),
                                sf::Vector2f(240, 158), sf::Vector2f(172, 247), sf::Vector2f(332, 337),
                                sf::Vector2f(483, 353), sf::Vector2f(411, 419), sf::Vector2f(259, 381),
                                sf::Vector2f(507, 160)};
