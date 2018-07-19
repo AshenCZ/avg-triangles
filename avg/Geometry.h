@@ -131,6 +131,11 @@ class Geometry {
         insertEdge(edge);
     }
 
+    /// Triangulates mPoints into new mTriangles, keeping all Edges in mImportant
+    void constrainedTriangulation() {
+        cdt();
+    }
+
    private:
     /// Triangulation methods
 

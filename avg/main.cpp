@@ -38,6 +38,8 @@ void handleEvents(sf::RenderWindow& window, AppData& data) {
                 data.insertDummyData();
             } else if(event.key.code == sf::Keyboard::G) {
                 data.insertPattern();
+            } else if(event.key.code == sf::Keyboard::C) {
+                data.geometry.constrainedTriangulation();
             } else if(event.key.code == sf::Keyboard::I) {
                 data.geometry.reset();
                 data.pattern.getNewValues();
