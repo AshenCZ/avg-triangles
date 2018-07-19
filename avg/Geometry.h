@@ -66,6 +66,15 @@ class ImportantEdges {
     void reset() {
         importantEdges.clear();
     }
+
+    void removeEdge(const Edge edge) {
+        for(size_t i = 0; i < importantEdges.size(); ++i) {
+            const Edge& current = importantEdges[i];
+            if(current.first == edge.first && current.second == edge.second) {
+                importantEdges.erase(importantEdges.begin() + i);
+            }
+        }
+    }
 };
 
 class Geometry {
