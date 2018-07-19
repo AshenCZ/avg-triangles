@@ -580,6 +580,31 @@ class Geometry {
         return newIns.pointsIndex;
     }
 
+    void importantEdgeSplitCheck(const Intersection& edg, const Triangle& tri, size_t indexNewPointInSplitEdge) {
+        Edge splitEdge;
+        if(edg.edgeIntersected == 0) {
+            splitEdge = Edge(tri.vertexIndex[0], tri.vertexIndex[1]);
+        } else if(edg.edgeIntersected == 1) {
+            splitEdge = Edge(tri.vertexIndex[1], tri.vertexIndex[2]);
+        } else if(edg.edgeIntersected == 2) {
+            splitEdge = Edge(tri.vertexIndex[2], tri.vertexIndex[0]);
+        } else {
+            splitEdge = Edge(-1, -1);
+            assert(false);
+        }
+        const bool importantEdgeSplit = mImportant.isImportant(splitEdge);
+
+        if(splitEdge.first == indexNewPointInSplitEdge || splitEdge.second == indexNewPointInSplitEdge) {
+            return;
+        }
+
+        if(importantEdgeSplit) {
+            mImportant.removeEdge(splitEdge);
+            mImportant.insertEdge(Edge(splitEdge.first, indexNewPointInSplitEdge));
+            mImportant.insertEdge(Edge(indexNewPointInSplitEdge, splitEdge.second));
+        }
+    }
+
     void insertEdge(const Edge& edge) {
         const sf::Vector2f pos = mPoints[edge.first];
         const sf::Vector2f dir = mPoints[edge.second] - mPoints[edge.first];
@@ -636,8 +661,15 @@ class Geometry {
                         }
                     }
                     if(invalid) {
+                        newTriangles.emplace_back(tri);
+                        if(!mImportant.isImportant(Edge(newPtIndex0, newPtIndex1))) {
+                            mImportant.insertEdge(Edge(newPtIndex0, newPtIndex1));
+                        }
                         continue;
                     }
+
+                    importantEdgeSplitCheck(intersections[0], tri, newPtIndex0);
+                    importantEdgeSplitCheck(intersections[1], tri, newPtIndex1);
 
                     if(intersections[0].edgeIntersected + intersections[1].edgeIntersected == 1) {  // 0 and 1
                         size_t indexEdge0 = std::numeric_limits<size_t>::max();
@@ -766,23 +798,7 @@ class Geometry {
                     mImportant.insertEdge(Edge(vertInd, edgInd));
 
                     // Check if we split important edge
-                    Edge splitEdge;
-                    if(edg.edgeIntersected == 0) {
-                        splitEdge = Edge(tri.vertexIndex[0], tri.vertexIndex[1]);
-                    } else if(edg.edgeIntersected == 1) {
-                        splitEdge = Edge(tri.vertexIndex[1], tri.vertexIndex[2]);
-                    } else if(edg.edgeIntersected == 2) {
-                        splitEdge = Edge(tri.vertexIndex[2], tri.vertexIndex[0]);
-                    } else {
-                        splitEdge = Edge(-1, -1);
-                        assert(false);
-                    }
-                    const bool importantEdgeSplit = mImportant.isImportant(splitEdge);
-                    if(importantEdgeSplit) {
-                        mImportant.insertEdge(Edge(splitEdge.first, edgInd));
-                        mImportant.insertEdge(Edge(edgInd, splitEdge.second));
-                        mImportant.removeEdge(splitEdge);
-                    }
+                    importantEdgeSplitCheck(edg, tri, edgInd);
 
                     bool invalid = false;
                     for(size_t i = 0; i < 3; ++i) {
@@ -821,6 +837,7 @@ class Geometry {
                         }
                     } else {
                         newTriangles.emplace_back(tri);
+                        mImportant.insertEdge(Edge(vertInd, edgInd));
                     }
                 }
             }
