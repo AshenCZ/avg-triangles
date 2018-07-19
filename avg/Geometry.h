@@ -155,7 +155,7 @@ class Geometry {
         const sf::Vector2f circum(0.5f * (circum_x), 0.5f * (circum_y));
         const float circum_radius = distance(p1, circum);
         const float dist = distance(v, circum);
-        return dist <= circum_radius;
+        return dist < circum_radius;
     }
 
     void fillGeometry() {
