@@ -632,6 +632,16 @@ class Geometry {
                     assert(newPtIndex0 != std::numeric_limits<size_t>::max());
                     assert(newPtIndex1 != std::numeric_limits<size_t>::max());
 
+                    bool invalid = false;
+                    for(size_t i = 0; i < 3; ++i) {
+                        if(newPtIndex0 == tri.vertexIndex[i] || newPtIndex1 == tri.vertexIndex[i]) {
+                            invalid = true;
+                        }
+                    }
+                    if(invalid) {
+                        continue;
+                    }
+
                     if(intersections[0].edgeIntersected + intersections[1].edgeIntersected == 1) {  // 0 and 1
                         size_t indexEdge0 = std::numeric_limits<size_t>::max();
                         size_t indexEdge1 = std::numeric_limits<size_t>::max();
