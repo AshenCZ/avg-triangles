@@ -873,7 +873,7 @@ class Geometry {
         if(changed) {
             std::cout << "Changed.\n";
         } else {
-            std::cout << "Not changed.";
+            std::cout << "Not changed.\n";
         }
     }
 

@@ -113,7 +113,7 @@ class AppData {
         // Draw UI
         uiText[0].setString("Triangles: " + std::to_string(geometry.getTriangles().size()) +
                             "\nPoints: " + std::to_string(geometry.getPoints().size()) +
-                            "\nPress H to hide/show encapsulating triangle");
+                            "\n");
         for(const auto& rect : uiRects) {
             window.draw(rect);
         }
