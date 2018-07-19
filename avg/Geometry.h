@@ -779,4 +779,40 @@ class Geometry {
 
         mTriangles = std::move(newTriangles);
     }
+
+    /// Constrained Delaunay Triangulation
+
+    bool oneCdtPass() {
+        const std::array<std::pair<size_t, size_t>, 3> pairs = {std::pair<size_t, size_t>(0, 1), {1, 2}, {2, 0}};
+        for(size_t i = 0; i < mTriangles.size(); ++i) {
+            for(const auto& pair : pairs) {
+                const auto& triVertices = mTriangles[i].vertexIndex;
+                const Edge currentEdge(triVertices[pair.first], triVertices[pair.second]);
+                if(mImportant.isImportant(currentEdge)) {
+                    continue;
+                }
+                auto flipped = flip(i, pair.first, pair.second);
+                if(!flipped.empty()) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    void cdt() {
+        bool changed = false;
+        changed = oneCdtPass();
+
+        std::cout << "Changed: " << changed << "\n";
+    }
+
+    void cdt_all() {
+        bool changed = false;
+        std::cout << "CDT starting.\n";
+        do {
+            changed = oneCdtPass();
+        } while(changed);
+        std::cout << "CDT finished.\n";
+    }
 };
