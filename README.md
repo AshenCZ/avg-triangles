@@ -1,6 +1,7 @@
 # Semestrální práce na AVG
 
-**PROGRAM JE KE STÁHNUTÍ ZDE V [DEBUG VERZI](https://github.com/AshenCZ/avg-triangles/blob/master/download/debug_version.exe) A ZDE V [RELEASE VERZI](https://github.com/AshenCZ/avg-triangles/blob/master/download/release_version.exe)**
+**PROGRAM JE [KE STÁHNUTÍ ZDE](https://github.com/AshenCZ/avg-triangles/blob/master/download/avg-sh.zip).**
+Soubor `avg-sh.zip` obsahuje jak debug, tak release verzi programu. Release verze je o něco rychlejší, zatímco debug verze obsahuje `assert()`y, takže pokud se něco programu nebude líbit, dá Vám vědět místo pádu na náhodném místě.
 
 Úkolem bylo vytvořit program, který do 3D terénu (triangulovaného) promítne vzor zadaný jako seznam bodů a seznam hran. Protože promítnutí jsme omezili na osy X,Y a Z, pro snazší zobrazování v programu jsem rovnou použil 2D data - promítnutí podél jedné z os je jednoduché. Poté program pracuje v následujích krocích:
 
