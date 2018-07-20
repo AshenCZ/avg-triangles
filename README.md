@@ -8,14 +8,31 @@
 * Uživatel vloží data počáteční sítě - pravým tlačítkem myši se vloží bod, vytvoří se nové trojúhelníky a provede se Delaunayova triangulace
 * Uživatel může zkotrolovat korektnost inkrementálního triangulování zmáčknutím tlačítka "Triangulate", které zahodí všechna data o trojúhelnících a aktuální body znovu vytrianguluje inkrementálním algoritmem pro DT
 * Zmáčknutím tlačítka **H** se uživateli zobrazí aktuální podoba, poloha, opakování a směr vzoru (červeně) a skryté hrany trojúhelníku, který byl vytvořen pro účely inkrementální DT
+* Stisknutím tlačítka **F1** se vloží předem připravená malá síť pro testování
 * Stisknutím tlačítka **I** uživatel může zadat nové parametry vzoru - nejdříve počet opakování (< 10), poté startovní bod (< (800,600)) a poté směr. Nastavení je přijato hláškou "Pattern set."
 * Nové nastavení vzoru je možné opět zkontrolovat pomocí **H**.
 * Tlačítkem **G** se poté vzor vyřeže do aktuální trojúhelníkové sítě. Zatím se neprovádí žádná triangulace. Důležité hrany vzoru jsou vybarvené fialově.
 * Zmáčknutí klávesy **C** se poté provede jeden krok constrained Delaunayovy triangulace. Žádná z fialových hran nezmizí, ale jinak se celá síť dotrianguluje.
 * Zmáčknutím tlačítka "Triangulate" je poté možno zjistit, zda se CDT liší od DT (pokud se triangulace změní po stisku tlačítka, byla CDT omezena nějakou fialovou hranou)
 * Stisknutím klávesy **R** je možné celý program resetovat zpět do prázdného nastavení.
+* Program je možno ukončit klávesou **Esc**
 
 ### Obrázky
+#### Základní práce - vkládání nových bodů a zobrazení skrytých obejktů pomocí **H**
+![](https://i.imgur.com/UN8ZZM5.gif)
+
+#### Nové nastavení vzoru pomocí klávesy I a vložení testovací sítě pomocí klávesy F1
+![](https://i.imgur.com/QWPRubb.gif)
+
+#### Vyřezání hran vzoru do triangulace (klávesa G)
+![](https://i.imgur.com/7mLotRn.gif)
+
+#### Ukázka rozdílu DT (Triangulate) a CDT (klávesa C)
+Na tomto .gifu je možné si všimnout, že provedením CDT až "nakonec" - program vypisuje "Not changed." v konzoli, pořád není dosaženo dokonalé Delaunayovy triangulace. Po stisknutí tlačítka "Triangulate" se triangulace změní a zároveň zmizí levé hrany horní části písmenka T.
+![](https://i.imgur.com/ew8ooLu.gif)
+
+#### Ukázka složitého vzoru, ve kterém CDT == DT
+![](https://i.imgur.com/uhbU5Sf.gif)
 
 ## Implementace
 
