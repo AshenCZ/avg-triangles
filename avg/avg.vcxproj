@@ -126,7 +126,6 @@
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>D:\Develop\SFML-2.5.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalOptions>std:c++latest %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>

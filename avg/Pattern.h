@@ -19,6 +19,8 @@ class Pattern {
 
     size_t mCount = 1;
     sf::Vector2f mDirection = sf::Vector2f(75, 75);
+    size_t mCount = 3;
+    sf::Vector2f mDirection = sf::Vector2f(30, 30);
     sf::Vector2f mStart = sf::Vector2f(200, 200);
 
    public:

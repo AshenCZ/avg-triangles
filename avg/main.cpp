@@ -8,7 +8,7 @@
 #include "AppData.h"
 #include "Geometry.h"
 
-#define FPS_LIMIT 10
+#define FPS_LIMIT 60
 
 void handleEvents(sf::RenderWindow& window, AppData& data) {
     sf::Event event{};
